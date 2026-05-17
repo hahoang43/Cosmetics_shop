@@ -1,0 +1,227 @@
+/* --- RESET & CƠ BẢN --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f4f6f9;
+    color: #333;
+}
+
+/* --- BỐ CỤC CHÍNH --- */
+.admin-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --- SIDEBAR (THANH BÊN TRÁI) --- */
+.admin-sidebar {
+    width: 250px;
+    background-color: #2c3e50; /* Xanh đen */
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.sidebar-header {
+    padding: 20px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    border-bottom: 1px solid #1a252f;
+    letter-spacing: 2px;
+}
+
+.sidebar-header span {
+    color: #D4A373; /* Giữ lại chút màu cam nude của Lumina */
+}
+
+.sidebar-menu {
+    list-style: none;
+    margin-top: 20px;
+}
+
+.sidebar-menu li a {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    color: #bdc3c7;
+    text-decoration: none;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+.sidebar-menu li a i {
+    width: 30px;
+    font-size: 18px;
+}
+
+.sidebar-menu li a:hover, .sidebar-menu li a.active {
+    background-color: #34495e;
+    color: #fff;
+    border-left: 4px solid #D4A373;
+}
+
+/* --- NỘI DUNG CHÍNH --- */
+.admin-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header mỏng phía trên */
+.admin-header {
+    background: #fff;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.admin-header .admin-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* Khu vực hiển thị nội dung */
+.admin-content {
+    padding: 20px;
+    flex: 1;
+}
+
+.page-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+/* --- DASHBOARD CARDS (Thẻ thống kê) --- */
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: #fff;
+}
+
+.stat-info h4 {
+    font-size: 14px;
+    color: #7f8c8d;
+    margin-bottom: 5px;
+}
+
+.stat-info span {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+/* --- BẢNG DỮ LIỆU ADMIN --- */
+.admin-table-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th, .admin-table td {
+    padding: 15px 20px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-table th {
+    background-color: #2c3e50;
+    color: #fff;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+.admin-table tr:hover {
+    background-color: #f9fbfd;
+}
+
+/* Các nhãn trạng thái (Badge) */
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    display: inline-block;
+    text-align: center;
+    min-width: 100px;
+}
+
+.badge-pending { background-color: #f39c12; }  /* Chờ xử lý - Cam */
+.badge-shipping { background-color: #3498db; } /* Đang giao - Xanh dương */
+.badge-completed { background-color: #2ecc71; }/* Hoàn thành - Xanh lá */
+.badge-canceled { background-color: #e74c3c; } /* Đã hủy - Đỏ */
+
+/* Nút thao tác */
+.btn-action {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    transition: 0.2s;
+}
+
+.btn-update { background: #D4A373; color: white; }
+.btn-update:hover { background: #c2905f; }
+
+/* --- CẬP NHẬT LẠI CLASS BTN-VIEW CHUẨN TRONG ADMIN.CSS --- */
+.btn-view {
+    display: inline-flex;     /* Chuyển sang flexbox để icon và chữ nằm trên 1 hàng */
+    align-items: center;      /* Căn giữa icon và chữ theo chiều dọc */
+    gap: 6px;                 /* Tạo khoảng cách vừa phải giữa icon và chữ */
+    white-space: nowrap;      /* Tuyệt đối không cho phép rớt chữ xuống dòng */
+    background: #34495e; 
+    color: white; 
+    text-decoration: none; 
+    padding: 7px 12px; 
+    border-radius: 4px; 
+    font-size: 13px;
+    transition: 0.2s;
+}
+.btn-view:hover { 
+    background: #2c3e50; 
+}

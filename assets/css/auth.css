@@ -1,0 +1,157 @@
+
+/* Lớp nền mờ phía sau form */
+.auth-bg {
+    background-color: #F9F6F0; /* Màu kem/be nhạt rất hợp với mỹ phẩm */
+    min-height: calc(100vh - 150px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 50px 20px;
+}
+
+/* Khung chứa toàn bộ form */
+.auth-container {
+    display: flex;
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+    overflow: hidden;
+    max-width: 900px;
+    width: 100%;
+}
+
+/* Cột bên trái (Chứa Logo & Slogan) */
+.auth-left {
+    flex: 1;
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-right: 1px solid #EEEEEE;
+    background-color: #FFFFFF;
+}
+
+.auth-left img {
+    max-width: 250px;
+    margin-bottom: 10px;
+}
+
+/* Cột bên phải (Chứa Form nhập liệu) */
+.auth-right {
+    flex: 1;
+    padding: 50px 40px;
+    background-color: #FFFFFF;
+}
+
+.auth-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: #333333;
+    margin-bottom: 30px;
+    text-align: center;
+    font-weight: 700;
+}
+
+/* Ô nhập liệu (Input) */
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #E0E0E0;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    border-color: #D4A373; /* Viền đổi màu tone nude khi click vào */
+    box-shadow: 0 0 0 3px rgba(212, 163, 115, 0.1);
+}
+
+/* Nút Submit chính (Đăng nhập / Đăng ký) */
+.btn-auth-submit {
+    width: 100%;
+    background-color: #D4A373;
+    color: #FFFFFF;
+    border: none;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-bottom: 15px;
+}
+
+.btn-auth-submit:hover {
+    background-color: #C2905F;
+}
+
+/* Khu vực link (Quên mật khẩu, quay lại) */
+.auth-links {
+    text-align: center;
+    font-size: 14px;
+}
+
+.auth-links .link {
+    color: #666666;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.auth-links .link:hover {
+    color: #D4A373;
+    font-weight: 500;
+}
+
+/* Đường kẻ ngang chia form */
+.auth-form hr {
+    border: none;
+    border-top: 1px solid #EEEEEE;
+    margin: 25px 0;
+}
+
+/* Nút phụ (Chuyển đổi form Đăng nhập <-> Đăng ký) */
+.btn-switch-form {
+    width: 100%;
+    background-color: transparent;
+    color: #333333;
+    border: 1px solid #333333;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'Montserrat', sans-serif;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-switch-form:hover {
+    background-color: #333333;
+    color: #FFFFFF;
+}
+
+/* Responsive cho màn hình điện thoại (Mobile) */
+@media (max-width: 768px) {
+    .auth-container {
+        flex-direction: column;
+    }
+    
+    .auth-left {
+        border-right: none;
+        border-bottom: 1px solid #EEEEEE;
+        padding: 40px 20px;
+    }
+    
+    .auth-right {
+        padding: 40px 20px;
+    }
+}
