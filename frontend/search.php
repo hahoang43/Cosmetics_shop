@@ -1,6 +1,7 @@
-<?php 
+<?php
 require_once '../config/database.php';
-require_once '../includes/header.php'; 
+$conn = getDatabase();
+require_once '../includes/header.php';
 
 $keyword = isset($_GET['keyword']) ? trim($_GET['keyword']) : '';
 $search_results = [];
@@ -27,11 +28,17 @@ if ($keyword !== '') {
                 <div class="product-card" style="border: 1px solid #eee; border-radius: 8px; overflow: hidden; transition: 0.3s;">
                     <a href="product_detail.php?id=<?= $item['id'] ?>" class="product-link" style="text-decoration: none; color: inherit;">
                         <div class="product-img" style="position: relative;">
-                            <img src="../assets/uploads/products/<?= htmlspecialchars($item['thumbnail']) ?>" alt="<?= htmlspecialchars($item['title']) ?>" style="width: 100%; aspect-ratio: 1/1; object-fit: cover;">
+                            <?php if ($item['old_price'] > $item['price']): ?>
+                                <div class="product-badge sale-badge" style="position: absolute; top: 10px; left: 10px; background: #e67e22; color: white; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 700;">Sale</div>
+                            <?php endif; ?>
+                            <img src="<?= htmlspecialchars(imageSrc($item['thumbnail'] ?? '', 'products')) ?>" alt="<?= htmlspecialchars($item['title']) ?>" loading="lazy" style="width: 100%; aspect-ratio: 1/1; object-fit: cover;">
                         </div>
                         <div style="padding: 15px;">
                             <h3 style="font-size: 15px; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 42px;"><?= htmlspecialchars($item['title']) ?></h3>
-                            <div class="price" style="display: flex; align-items: center; gap: 10px;">
+                            <div class="price" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <?php if ($item['old_price'] > $item['price']): ?>
+                                    <span class="old-price" style="color: #999; text-decoration: line-through; font-size: 13px;"><?= number_format($item['old_price'], 0, ',', '.') ?>đ</span>
+                                <?php endif; ?>
                                 <span class="current-price" style="color: #D4A373; font-weight: bold; font-size: 16px;"><?= number_format($item['price'], 0, ',', '.') ?>đ</span>
                             </div>
                         </div>

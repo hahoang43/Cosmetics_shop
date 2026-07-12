@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once '../config/database.php';
+require_once '../includes/popup_notify.php';
+$conn = getDatabase();
 
 // 1. Kiểm tra xem người dùng đã đăng nhập chưa
 if (!isset($_SESSION['user'])) {
@@ -20,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Validate cơ bản: Không được để trống Họ và Tên
     if (empty($fullname)) {
-        echo "<script>alert('Vui lòng nhập Họ và tên!'); window.history.back();</script>";
+        popup_error('Thiếu thông tin', 'Vui lòng nhập Họ và tên!', true);
         exit;
     }
 
@@ -38,13 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // Báo thành công bằng flash session và chuyển hướng
         $_SESSION['flash_success'] = 'Cập nhật thông tin thành công!';
-        header("Location: profile.php");
+        popup_success('Thành công', 'Cập nhật thông tin thành công!', 'profile.php');
         exit;
 
     } catch (PDOException $e) {
         // Báo lỗi bằng flash session và chuyển hướng
-        $_SESSION['flash_error'] = 'Lỗi Database: ' . $e->getMessage();
-        header("Location: profile.php");
+        popup_error('Lỗi Database', $e->getMessage(), true);
         exit;
     }
 } else {

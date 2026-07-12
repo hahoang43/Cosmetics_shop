@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../config/database.php';
+$conn = getDatabase();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // 1. Kiểm tra đăng nhập (Chỉ User mới được đánh giá)

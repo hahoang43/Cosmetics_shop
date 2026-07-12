@@ -1,6 +1,17 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/admin_header.php'; 
+
+function ensureProductDiscountPercentColumn(PDO $conn): void {
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Product' AND COLUMN_NAME = 'discount_percent'");
+    $stmt->execute();
+    if ((int)$stmt->fetchColumn() === 0) {
+        $conn->exec("ALTER TABLE Product ADD COLUMN discount_percent INT NOT NULL DEFAULT 0 AFTER old_price");
+    }
+}
+
+ensureProductDiscountPercentColumn($conn);
 
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($id <= 0) { echo "<script>alert('Mã sản phẩm không hợp lệ!'); window.location.href='products.php';</script>"; exit; }
@@ -9,6 +20,13 @@ $stmt_prod = $conn->prepare("SELECT * FROM Product WHERE id = ? AND deleted = 0"
 $stmt_prod->execute([$id]);
 $product = $stmt_prod->fetch();
 if (!$product) { echo "<script>alert('Không tìm thấy sản phẩm!'); window.location.href='products.php';</script>"; exit; }
+
+$base_price = (float)(($product['old_price'] > $product['price'] && $product['old_price'] > 0) ? $product['old_price'] : $product['price']);
+$discount_percent = isset($product['discount_percent']) ? (int)$product['discount_percent'] : 0;
+if ($discount_percent <= 0 && $product['old_price'] > $product['price'] && $product['old_price'] > 0) {
+    $discount_percent = (int) round((1 - ($product['price'] / $product['old_price'])) * 100);
+}
+$discounted_price = $discount_percent > 0 ? (int) round($base_price * (100 - $discount_percent) / 100) : (int) round($base_price);
 
 // XỚA ẢNH PHỤ TRONG THƯ VIỆN KHI ADMIN BẤM NÚT XÓA ẢNH
 if (isset($_GET['delete_gal_id'])) {
@@ -53,8 +71,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $title = trim($_POST['title']);
     $brand = trim($_POST['brand']);
     $category_id = (int)$_POST['category_id'];
-    $price = (float)$_POST['price'];
-    $old_price = !empty($_POST['old_price']) ? (float)$_POST['old_price'] : 0;
+    $base_price = (float)$_POST['price'];
+    $discount_percent = isset($_POST['discount_percent']) ? max(0, min(100, (int)$_POST['discount_percent'])) : 0;
+    $price = $discount_percent > 0 ? (float) round($base_price * (100 - $discount_percent) / 100) : $base_price;
+    $old_price = $discount_percent > 0 ? $base_price : 0;
     $description = trim($_POST['description']);
     $thumbnail = $product['thumbnail']; 
     
@@ -71,9 +91,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             $conn->beginTransaction();
 
-            $sql = "UPDATE Product SET category_id=?, title=?, price=?, old_price=?, thumbnail=?, description=?, brand=? WHERE id=?";
+            $sql = "UPDATE Product SET category_id=?, title=?, price=?, old_price=?, thumbnail=?, description=?, brand=?, discount_percent=? WHERE id=?";
             $stmt_update = $conn->prepare($sql);
-            $stmt_update->execute([$category_id, $title, $price, $old_price, $thumbnail, $description, $brand, $id]);
+            $stmt_update->execute([$category_id, $title, $price, $old_price, $thumbnail, $description, $brand, $discount_percent, $id]);
 
             $pv_ids = $_POST['pv_ids'] ?? []; 
             $variant_names = $_POST['variant_names'] ?? []; 
@@ -105,8 +125,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $vname = trim($variant_names[$i]);
                 if (!empty($vname)) {
                     $pvid = (int)($pv_ids[$i] ?? 0);
-                    $vprice = (float)$var_prices[$i];
-                    $vold = (float)$var_old_prices[$i];
+                    $baseVariantPrice = (float)$var_prices[$i];
+                    $vprice = $discount_percent > 0 ? (float) round($baseVariantPrice * (100 - $discount_percent) / 100) : $baseVariantPrice;
+                    $vold = $discount_percent > 0 ? $baseVariantPrice : (float)$var_old_prices[$i];
                     $vqty = (int)$var_qtys[$i];
                     
                     // Mặc định gán lại ảnh biến thể cũ của dòng này
@@ -208,8 +229,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <?php foreach($categories as $cat): ?><option value="<?= $cat['id'] ?>" <?= ($cat['id'] == $product['category_id']) ? 'selected' : '' ?>><?= htmlspecialchars($cat['name']) ?></option><?php endforeach; ?>
                 </select>
             </div>
-            <div><label style="font-weight: bold;">Giá hiển thị (VNĐ) *</label><input type="number" name="price" value="<?= (int)$product['price'] ?>" required min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;"></div>
-            <div><label style="font-weight: bold;">Giá cũ hiển thị</label><input type="number" name="old_price" value="<?= (int)$product['old_price'] ?>" min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;"></div>
+            <div><label style="font-weight: bold;">Giá gốc (VNĐ) *</label><input type="number" name="price" id="base-price" value="<?= (int)$base_price ?>" required min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;"></div>
+            <div><label style="font-weight: bold;">Khuyến mãi (%)</label><input type="number" name="discount_percent" id="discount-percent" value="<?= (int)$discount_percent ?>" min="0" max="100" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;"></div>
+        </div>
+
+        <div style="margin-bottom: 20px; background: #fdfaf6; border: 1px dashed #e7c9a4; padding: 14px 16px; border-radius: 6px; color: #7a4f2e;">
+            <strong>Giá hiển thị sau khuyến mãi:</strong>
+            <span id="discounted-price-preview" style="font-size: 18px; margin-left: 8px; color: #D4A373; font-weight: 700;"><?= number_format($discounted_price, 0, ',', '.') ?>đ</span>
         </div>
 
         <datalist id="variant_list">
@@ -240,8 +266,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_qtys[]" value="<?= $pv['quantity'] ?>" required min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
                         <td style="padding: 10px; border: 1px solid #ddd;">
                             <div style="display:flex; align-items:center; gap:8px;">
-                                <?php if(!empty($pv['thumbnail'])): ?>
-                                    <img src="../assets/uploads/products/<?= htmlspecialchars($pv['thumbnail']) ?>" style="width:35px; height:35px; object-fit:cover; border-radius:3px; border:1px solid #eee;">
+                                    <?php if(!empty($pv['thumbnail'])): ?>
+                                    <img src="/Cosmetics_shop/assets/uploads/products/<?= htmlspecialchars($pv['thumbnail']) ?>" style="width:35px; height:35px; object-fit:cover; border-radius:3px; border:1px solid #eee;">
                                 <?php endif; ?>
                                 <input type="file" name="var_thumbnails[]" accept="image/*" style="width:100%; padding:3px;">
                             </div>
@@ -255,9 +281,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         <h3 style="margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">3. Hình ảnh & Mô tả</h3>
         <div style="margin-bottom: 20px; display: flex; gap: 40px; align-items: flex-start; border-bottom: 1px dashed #eee; padding-bottom: 20px;">
-            <div style="width: 120px; text-align: center;">
+                <div style="width: 120px; text-align: center;">
                 <p style="margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #555;">Ảnh đại diện chính</p>
-                <img src="../assets/uploads/products/<?= htmlspecialchars($product['thumbnail']) ?>" style="width: 100%; border-radius: 5px; border: 1px solid #eee;" onerror="this.src='https://via.placeholder.com/120?text=No+Image';">
+                <img src="<?= htmlspecialchars(imageSrc($product['thumbnail'] ?? '', 'products')) ?>" style="width: 100%; border-radius: 5px; border: 1px solid #eee;" onerror="this.onerror=null;this.src='<?= htmlspecialchars(noImageSrc('No Image')) ?>';">
             </div>
             <div style="flex: 1;">
                 <label style="display: block; font-weight: bold; margin-bottom: 8px;">Thay đổi ảnh đại diện (Thumbnail)</label>
@@ -269,9 +295,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <label style="display: block; font-weight: bold; margin-bottom: 10px;">Thư viện ảnh mô tả phụ hiện tại</label>
             <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 15px;">
                 <?php if (count($gallery_images) > 0): ?>
-                    <?php foreach ($gallery_images as $img): ?>
+                        <?php foreach ($gallery_images as $img): ?>
                         <div style="position: relative; width: 100px; border: 1px solid #ddd; padding: 5px; border-radius: 4px; background: #fff;">
-                            <img src="../assets/uploads/products/<?= htmlspecialchars($img['thumbnail']) ?>" style="width: 100%; height: 80px; object-fit: cover; border-radius: 3px;">
+                            <img src="/Cosmetics_shop/assets/uploads/products/<?= htmlspecialchars($img['thumbnail']) ?>" style="width: 100%; height: 80px; object-fit: cover; border-radius: 3px;">
                             <a href="product_edit.php?id=<?= $id ?>&delete_gal_id=<?= $img['id'] ?>" onclick="return confirm('Xóa ảnh mô tả này?')" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; width: 20px; height: 20px; border-radius: 50%; text-align: center; line-height: 18px; text-decoration: none; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">x</a>
                         </div>
                     <?php endforeach; ?>
@@ -312,6 +338,17 @@ document.getElementById('btn-add-variant').addEventListener('click', function() 
     `;
     tbody.appendChild(row);
 });
+
+function updateDiscountPreview() {
+    const basePrice = parseFloat(document.getElementById('base-price').value || '0');
+    const discountPercent = Math.min(100, Math.max(0, parseFloat(document.getElementById('discount-percent').value || '0')));
+    const discountedPrice = discountPercent > 0 ? Math.round(basePrice * (100 - discountPercent) / 100) : Math.round(basePrice);
+    document.getElementById('discounted-price-preview').textContent = new Intl.NumberFormat('vi-VN').format(discountedPrice) + 'đ';
+}
+
+document.getElementById('base-price').addEventListener('input', updateDiscountPreview);
+document.getElementById('discount-percent').addEventListener('input', updateDiscountPreview);
+updateDiscountPreview();
 
 document.getElementById('variant-body').addEventListener('click', function(e) {
     if (e.target && e.target.classList.contains('btn-remove-row')) {

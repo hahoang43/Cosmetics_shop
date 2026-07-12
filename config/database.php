@@ -1,8 +1,12 @@
 <?php
+// Database Configuration - Cấu hình Cơ sở dữ liệu
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'db_mypham');
+
+// Kết nối PDO luôn được khởi tạo dưới dạng object
+/** @var PDO $conn */
 
 try {
     // Chuỗi DSN (Data Source Name)
@@ -25,4 +29,22 @@ try {
 } catch (PDOException $e) {
     die("Lỗi kết nối cơ sở dữ liệu: " . $e->getMessage());
 }
-?>
+
+// Ensure $conn is always available in global scope
+$GLOBALS['conn'] = $conn;
+
+// Helper function to get database connection
+function getDatabase(): PDO {
+    global $conn;
+    return $conn;
+}
+
+// Hàm tạo mã đơn hàng gồm 7 ký tự (chữ hoa/thường + số)
+function generateOrderCode(): string {
+    $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    $code = '';
+    for ($i = 0; $i < 7; $i++) {
+        $code .= $characters[random_int(0, strlen($characters) - 1)];
+    }
+    return $code;
+}

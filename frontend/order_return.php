@@ -1,6 +1,9 @@
 <?php 
 require_once '../config/database.php';
+require_once '../includes/popup_notify.php';
+$conn = getDatabase();
 require_once '../includes/header.php'; 
+echo popup_assets();
 
 if (!isset($_SESSION['user'])) { 
     header("Location: login.php"); 
@@ -27,13 +30,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (!empty($reason)) {
         $stmt_update = $conn->prepare("UPDATE Orders SET status = 4, return_reason = ? WHERE id = ?");
         $stmt_update->execute([$reason, $id]);
-        echo "<script>alert('Gửi yêu cầu trả hàng thành công! Vui lòng chờ hệ thống kiểm duyệt.'); window.location.href='order_history.php';</script>";
+        popup_success('Đã gửi yêu cầu', 'Yêu cầu trả hàng của bạn đã được gửi thành công. Vui lòng chờ hệ thống kiểm duyệt.', 'order_history.php');
         exit;
     }
 }
 ?>
 
-<link rel="stylesheet" href="../assets/css/profile.css">
+<link rel="stylesheet" href="/Cosmetics_shop/assets/css/profile.css">
 
 <div class="container" style="margin-top: 30px; margin-bottom: 60px;">
     <div class="profile-container">
@@ -57,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <main class="profile-main" style="flex: 1;">
             <div style="border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 25px;">
                 <h2 style="font-family: 'Playfair Display', serif; font-size: 24px; color: #2c3e50;">
-                    <i class="fa-solid fa-arrow-rotate-left"></i> Yêu cầu hoàn trả đơn hàng #<?= $id ?>
+                    <i class="fa-solid fa-arrow-rotate-left"></i> Yêu cầu hoàn trả đơn hàng #<?= htmlspecialchars(!empty($order['order_code']) ? $order['order_code'] : $order['id']) ?>
                 </h2>
                 <p style="color: #777; font-size: 14px; margin-top: 5px;">Chính sách hỗ trợ đổi trả hàng lỗi, sai phân loại trong vòng 7 ngày kể từ khi nhận hàng.</p>
             </div>

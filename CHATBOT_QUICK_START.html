@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuLu Chatbot - Quick Start Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #D4A373 0%, #c2905f 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px;
+        }
+        section {
+            margin-bottom: 40px;
+        }
+        h2 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #D4A373;
+        }
+        h3 {
+            color: #555;
+            font-size: 18px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+        ol, ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+            color: #666;
+            line-height: 1.8;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        code, .code-block {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d63384;
+        }
+        .code-block {
+            display: block;
+            padding: 15px;
+            margin: 15px 0;
+            overflow-x: auto;
+            border-left: 4px solid #D4A373;
+            background: #f9f9f9;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .step {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #D4A373;
+        }
+        .step-number {
+            display: inline-block;
+            background: #D4A373;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #D4A373;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #c2905f;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .btn-secondary {
+            background: #95a5a6;
+        }
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+        .highlight {
+            background: #fffacd;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ffd700;
+            margin: 15px 0;
+        }
+        .success {
+            background: #efe;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #3c3;
+            color: #234;
+            margin: 15px 0;
+        }
+        .error {
+            background: #fee;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #c33;
+            color: #433;
+            margin: 15px 0;
+        }
+        footer {
+            background: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 12px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+        tr:hover {
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>💬 LuLu Chatbot - Quick Start</h1>
+            <p>Hướng dẫn nhanh để kích hoạt Gemini AI Chatbot trên Lumina Cosmetics</p>
+        </header>
+
+        <div class="content">
+            <!-- Overview -->
+            <section>
+                <h2>🎯 Giới Thiệu</h2>
+                <p>
+                    LuLu là một chatbot AI thông minh được tích hợp trên website Lumina Cosmetics. 
+                    Chatbot này sử dụng <strong>Google Gemini AI</strong> để trả lời câu hỏi của khách hàng 
+                    về mỹ phẩm, chính sách cửa hàng, và nhiều thông tin hữu ích khác.
+                </p>
+                <p><strong>✨ Tính năng:</strong></p>
+                <ul>
+                    <li>Chatbot luôn có sẵn ở góc dưới phải của mỗi trang</li>
+                    <li>Lưu lịch sử chat giữa các lần visit</li>
+                    <li>Phản hồi thông minh và tự nhiên từ AI</li>
+                    <li>Hỗ trợ tiếng Việt hoàn toàn</li>
+                    <li>Responsive trên desktop & mobile</li>
+                </ul>
+            </section>
+
+            <!-- Requirements -->
+            <section>
+                <h2>📋 Yêu Cầu</h2>
+                <ul>
+                    <li>Server PHP hỗ trợ cURL extension</li>
+                    <li>Kết nối Internet ổn định</li>
+                    <li>Gemini API key (miễn phí)</li>
+                    <li>Trình duyệt hiện đại (Chrome, Firefox, Safari, Edge)</li>
+                </ul>
+            </section>
+
+            <!-- Setup Guide -->
+            <section>
+                <h2>🚀 Hướng Dẫn Setup</h2>
+
+                <div class="step">
+                    <span class="step-number">1</span>
+                    <h3>Lấy Gemini API Key</h3>
+                    <p>Truy cập một trong các link sau:</p>
+                    <ul>
+                        <li><strong>Cách 1 (Dễ nhất):</strong> <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a> - Chọn "Create API key"</li>
+                        <li><strong>Cách 2:</strong> <a href="https://console.cloud.google.com/" target="_blank">Google Cloud Console</a> - Tạo project và enable Generative Language API</li>
+                    </ul>
+                    <div class="highlight">
+                        💡 <strong>Tip:</strong> Google cung cấp API key miễn phí với giới hạn reasonable (60 requests/phút).
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">2</span>
+                    <h3>Cập Nhật API Key</h3>
+                    <p>Mở file <code>config/gemini_config.php</code> và thay thế:</p>
+                    <div class="code-block">define('GEMINI_API_KEY', 'YOUR_GEMINI_API_KEY');</div>
+                    <p>bằng API key thực của bạn:</p>
+                    <div class="code-block">define('GEMINI_API_KEY', 'sk-xxxxxxxxxxxxxxxxxxxxxxxxxxx');</div>
+                    <div class="highlight">
+                        ⚠️ <strong>Lưu ý bảo mật:</strong> Không bao giờ commit API key lên GitHub hoặc chia sẻ công khai!
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">3</span>
+                    <h3>Kiểm Tra API Key</h3>
+                    <p>Truy cập:</p>
+                    <div class="code-block">http://yoursite.com/backend/test_gemini.php</div>
+                    <p>Nhập API key và click "Test API" để kiểm tra kết nối.</p>
+                    <div class="success">
+                        ✅ Nếu thành công, bạn sẽ thấy phản hồi từ Gemini
+                    </div>
+                </div>
+
+                <div class="step">
+                    <span class="step-number">4</span>
+                    <h3>Hoàn Thành!</h3>
+                    <p>Truy cập bất kỳ trang nào trên website, bạn sẽ thấy button LuLu ở góc dưới phải.</p>
+                    <p>Click vào để bắt đầu chat!</p>
+                </div>
+            </section>
+
+            <!-- Files Structure -->
+            <section>
+                <h2>📁 Cấu Trúc File</h2>
+                <table>
+                    <tr>
+                        <th>File / Folder</th>
+                        <th>Mục Đích</th>
+                        <th>Ghi Chú</th>
+                    </tr>
+                    <tr>
+                        <td><code>config/gemini_config.php</code></td>
+                        <td>Lưu API key & cài đặt</td>
+                        <td>QUAN TRỌNG: Bảo vệ file này</td>
+                    </tr>
+                    <tr>
+                        <td><code>backend/gemini_chat.php</code></td>
+                        <td>API handler chính</td>
+                        <td>Xử lý requests từ chatbot</td>
+                    </tr>
+                    <tr>
+                        <td><code>backend/test_gemini.php</code></td>
+                        <td>Tool test API key</td>
+                        <td>Xóa sau khi setup xong</td>
+                    </tr>
+                    <tr>
+                        <td><code>includes/chatbot.php</code></td>
+                        <td>HTML component</td>
+                        <td>Include vào footer</td>
+                    </tr>
+                    <tr>
+                        <td><code>assets/css/chatbot.css</code></td>
+                        <td>Styling chatbot</td>
+                        <td>Có thể tùy chỉnh màu sắc</td>
+                    </tr>
+                    <tr>
+                        <td><code>assets/js/chatbot.js</code></td>
+                        <td>Logic chatbot</td>
+                        <td>Xử lý UI & logic</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Customization -->
+            <section>
+                <h2>🎨 Tùy Chỉnh</h2>
+                
+                <h3>Thay Đổi Tên Chatbot</h3>
+                <p>Sửa trong <code>config/gemini_config.php</code>:</p>
+                <div class="code-block">define('CHATBOT_NAME', 'LuLu');  // Thay thành tên khác</div>
+
+                <h3>Thay Đổi Màu Sắc</h3>
+                <p>Sửa trong <code>assets/css/chatbot.css</code>, tìm và thay thế:</p>
+                <div class="code-block">#D4A373  /* Màu primary - Thay bằng màu khác */
+#c2905f  /* Màu hover */</div>
+
+                <h3>Thay Đổi Vị Trí Button</h3>
+                <p>Sửa trong <code>assets/css/chatbot.css</code>:</p>
+                <div class="code-block">.chatbot-toggle {
+    bottom: 20px;  /* Khoảng cách từ dưới */
+    right: 20px;   /* Khoảng cách từ phải */
+}</div>
+
+                <h3>Cập Nhật System Prompt</h3>
+                <p>Để chatbot trả lời theo cách bạn muốn, sửa <code>system_context</code> trong <code>backend/gemini_chat.php</code></p>
+            </section>
+
+            <!-- Troubleshooting -->
+            <section>
+                <h2>🐛 Troubleshooting</h2>
+                
+                <h3>Chatbot không xuất hiện</h3>
+                <ul>
+                    <li>✓ Xóa cache trình duyệt (Ctrl+Shift+Delete)</li>
+                    <li>✓ Mở DevTools (F12) kiểm tra Console có error không</li>
+                    <li>✓ Chắc chắn footer.php được include trên tất cả trang</li>
+                </ul>
+
+                <h3>Chat không hoạt động / Lỗi API</h3>
+                <ul>
+                    <li>✓ Kiểm tra API key trong <code>config/gemini_config.php</code></li>
+                    <li>✓ Truy cập <code>backend/test_gemini.php</code> để test</li>
+                    <li>✓ Kiểm tra Network tab (F12 > Network) xem request đi đâu</li>
+                    <li>✓ Chắc chắn server hỗ trợ cURL extension</li>
+                </ul>
+
+                <h3>Bot trả lời sai hoặc không liên quan</h3>
+                <ul>
+                    <li>✓ Cập nhật <code>system_context</code> trong <code>backend/gemini_chat.php</code></li>
+                    <li>✓ Tăng/giảm <code>temperature</code> parameter (0.0-1.0)</li>
+                    <li>✓ Kiểm tra lại prompt instructions</li>
+                </ul>
+            </section>
+
+            <!-- Links -->
+            <section>
+                <h2>🔗 Các Link Hữu Ích</h2>
+                <ul>
+                    <li><a href="https://aistudio.google.com/app/apikey" target="_blank">📌 Google AI Studio - Lấy API Key</a></li>
+                    <li><a href="https://ai.google.dev/" target="_blank">📚 Gemini API Documentation</a></li>
+                    <li><a href="https://ai.google.dev/models" target="_blank">📊 Gemini Models Info</a></li>
+                    <li><a href="https://ai.google.dev/pricing" target="_blank">💰 Pricing & Quotas</a></li>
+                </ul>
+            </section>
+
+            <!-- Next Steps -->
+            <section>
+                <h2>📈 Bước Tiếp Theo</h2>
+                <ul>
+                    <li>✓ Cập nhật welcome message thích hợp với brand của bạn</li>
+                    <li>✓ Tùy chỉnh màu sắc theo theme website</li>
+                    <li>✓ Thêm knowledge base (FAQs) để chatbot trả lời chính xác hơn</li>
+                    <li>✓ Monitor chat logs để hiểu khách hàng cần gì</li>
+                    <li>✓ Xây dựng escalation flow đến nhân viên support (optional)</li>
+                </ul>
+            </section>
+
+            <!-- Support -->
+            <section>
+                <h2>❓ Cần Hỗ Trợ?</h2>
+                <p>Nếu gặp vấn đề:</p>
+                <div class="btn-group">
+                    <a href="backend/test_gemini.php" class="btn">🧪 Test API Key</a>
+                    <a href="CHATBOT_SETUP.md" class="btn btn-secondary">📖 Tài Liệu Chi Tiết</a>
+                </div>
+            </section>
+        </div>
+
+        <footer>
+            <p>LuLu Chatbot powered by Google Gemini AI</p>
+            <p>© 2026 Lumina Cosmetics - All Rights Reserved</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,6 +1,17 @@
-<?php 
+<?php
 require_once '../config/database.php';
-include '../includes/header.php'; 
+require_once '../config/shipping.php';
+require_once '../includes/popup_notify.php';
+
+// Khai báo tường minh để IDE không báo Undefined variable khi biến được tạo từ file include.
+/** @var PDO|null $conn */
+$conn = $conn ?? null;
+if (!($conn instanceof PDO)) {
+    throw new UnexpectedValueException('Kết nối cơ sở dữ liệu không hợp lệ.');
+}
+
+include_once '../includes/header.php';
+echo popup_assets();
 
 // === 1. CHẶN KHÁCH VÃNG LAI YÊU CẦU ĐĂNG NHẬP ===
 if (!isset($_SESSION['user'])) {
@@ -36,16 +47,19 @@ if (!isset($_SESSION['user'])) {
     exit; 
 }
 
-// 2. Kiểm tra giỏ hàng
-if (empty($_SESSION['cart'])) {
-    echo "<script>alert('Giỏ hàng của bạn đang trống!'); window.location.href='index.php';</script>";
+// 2. Kiểm tra giỏ hàng hoặc giỏ thanh toán tạm (buy now / thanh toán sản phẩm đã chọn)
+$checkout_cart = !empty($_SESSION['checkout_cart']) ? $_SESSION['checkout_cart'] : [];
+$source_cart = !empty($checkout_cart) ? $checkout_cart : ($_SESSION['cart'] ?? []);
+
+if (empty($source_cart)) {
+    popup_warning('Giỏ hàng trống', 'Giỏ hàng của bạn đang trống!', 'index.php');
     exit;
 }
 
 // 3. Tính toán dữ liệu giỏ hàng (CẬP NHẬT THEO BẢNG BIẾN THỂ)
 $total_price = 0;
 $cart_items = [];
-$ids = array_keys($_SESSION['cart']);
+$ids = array_keys($source_cart);
 $placeholders = str_repeat('?,', count($ids) - 1) . '?';
 
 $sql = "
@@ -60,7 +74,7 @@ $stmt->execute($ids);
 $products = $stmt->fetchAll();
 
 foreach ($products as $p) {
-    $qty = $_SESSION['cart'][$p['pv_id']];
+    $qty = $source_cart[$p['pv_id']];
     $subtotal = $p['price'] * $qty;
     $total_price += $subtotal;
     $cart_items[] = [
@@ -90,13 +104,24 @@ foreach ($products as $p) {
     
     <input type="email" id="email" placeholder="Email nhận hóa đơn" value="<?= htmlspecialchars($_SESSION['user']['email'] ?? '') ?>" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;">
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-        <select id="province" required style="padding: 12px; border: 1px solid #ddd; border-radius: 5px;"><option value="">Chọn Tỉnh/Thành</option></select>
-        <select id="district" required style="padding: 12px; border: 1px solid #ddd; border-radius: 5px;"><option value="">Chọn Quận/Huyện</option></select>
-        <select id="ward" required style="padding: 12px; border: 1px solid #ddd; border-radius: 5px;"><option value="">Chọn Phường/Xã</option></select>
+    <div style="position: relative; margin-bottom: 12px;">
+        <input type="text" id="address-search" placeholder="Tìm địa chỉ giao hàng (ví dụ: 227 Nguyễn Văn Cừ, Quận 5)" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px;" autocomplete="off" value="<?= htmlspecialchars($_SESSION['user']['address'] ?? '') ?>">
+        <div id="address-suggestions" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #dbe4ef; border-top: none; max-height: 240px; overflow-y: auto; z-index: 1000;"></div>
     </div>
 
-    <input type="text" id="street" placeholder="Số nhà, tên đường (Hoặc địa chỉ chi tiết)" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;" value="<?= htmlspecialchars($_SESSION['user']['address'] ?? '') ?>">
+    <button type="button" id="btn-open-map" style="width: 100%; background: #f8fafc; border: 1px solid #dbe4ef; border-radius: 8px; padding: 14px; margin-bottom: 15px; color: #334155; font-weight: 500; cursor: pointer; transition: 0.3s;">
+        <i class="fa-solid fa-map-location-dot"></i> Chọn vị trí giao hàng trên bản đồ
+    </button>
+    <p id="map-address-preview" style="margin: 0 0 15px 0; color: #475569; font-size: 14px; padding: 8px; background: #f9fafb; border-radius: 5px;">
+        Chưa chọn vị trí giao hàng.
+    </p>
+    <p id="distance-preview" style="margin: 0 0 15px 0; color: #64748b; font-size: 13px; padding: 8px; background: #f9fafb; border-radius: 5px;">
+        Khoảng cách tạm tính: -- km
+    </p>
+
+    <input type="hidden" id="customer-lat" value="">
+    <input type="hidden" id="customer-lng" value="">
+    <input type="hidden" id="map-address" value="">
     
     <textarea id="note" placeholder="Ghi chú đơn hàng (ví dụ: giao giờ hành chính)" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px; height: 60px;"></textarea>
 
@@ -116,20 +141,23 @@ foreach ($products as $p) {
                 <label class="payment-item">
                     <input type="radio" name="payment_method" value="banking">
                     <div class="payment-content">
-                        <div class="payment-icon"><i class="fa-solid fa-building-columns"></i></div>
+                        <div class="payment-icon"><i class="fa-solid fa-qrcode"></i></div>
                         <div class="payment-text">
-                            <strong>Chuyển khoản ngân hàng</strong>
-                            <span>Chuyển khoản qua QR Code hoặc STK để được xử lý nhanh hơn.</span>
+                            <strong>Chuyển khoản MoMo / QR</strong>
+                            <span>Thanh toán bằng mã QR MoMo.</span>
                         </div>
                     </div>
                 </label>
 
                 <div id="bank-info" class="bank-details" style="display: none;">
-                    <div class="bank-info-header"><i class="fa-solid fa-circle-info"></i> THÔNG TIN CHUYỂN KHOẢN</div>
+                    <div class="bank-info-header"><i class="fa-solid fa-circle-info"></i> THÔNG TIN THANH TOÁN MOMO</div>
                     <div class="bank-info-body">
-                        <p><strong>Chủ tài khoản:</strong> VÕ HỒ HOÀNG HÀ</p>
-                        <p><strong>Số tài khoản:</strong> 123456789 - MB Bank</p>
+                        <p><strong>Ví nhận:</strong> MoMo - LUMINA COSMETICS</p>
+                        <p><strong>Số điện thoại:</strong> 0909 123 456</p>
                         <p><strong>Nội dung:</strong> LUMINA [Số điện thoại của bạn]</p>
+                        <button type="button" id="btn-show-momo-qr" style="margin-top: 10px; background: #a50064; color: #fff; border: none; border-radius: 6px; padding: 10px 14px; cursor: pointer; font-weight: 600; width: 100%;">
+                            <i class="fa-solid fa-qrcode"></i> Xem mã QR MoMo
+                        </button>
                     </div>
                 </div>
             </div> 
@@ -163,11 +191,21 @@ foreach ($products as $p) {
                 <?php endforeach; ?>
             </div>
 
-            <div class="total-row" style="display: flex; justify-content: space-between; margin-top: 20px; font-size: 18px;">
-                <span>Tổng cộng:</span>
-                <span class="total-price" style="color: #e74c3c; font-weight: bold; font-size: 24px;">
-                    <?= number_format($total_price, 0, ',', '.'); ?>đ
-                </span>
+            <div style="margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 14px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 15px; color: #475569;">
+                    <span>Tạm tính:</span>
+                    <span id="subtotal-price"><?= number_format($total_price, 0, ',', '.'); ?>đ</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 15px; color: #475569;">
+                    <span>Phí vận chuyển:</span>
+                    <span id="shipping-price">0đ</span>
+                </div>
+                <div class="total-row" style="display: flex; justify-content: space-between; margin-top: 12px; font-size: 18px;">
+                    <span>Tổng cộng:</span>
+                    <span class="total-price" id="grand-total" style="color: #e74c3c; font-weight: bold; font-size: 24px;">
+                        <?= number_format($total_price, 0, ',', '.'); ?>đ
+                    </span>
+                </div>
             </div>
 
             <button type="submit" class="btn-order">XÁC NHẬN ĐẶT HÀNG</button>
@@ -175,48 +213,131 @@ foreach ($products as $p) {
     </form>
 </main>
 
+<div id="momo-qr-modal" style="display:none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.62); z-index: 10000; align-items: center; justify-content: center; padding: 16px;">
+    <div style="width: 100%; max-width: 460px; background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.25);">
+        <div style="background: linear-gradient(135deg, #a50064, #d81b60); color: #fff; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <div>
+                <div style="font-size: 13px; opacity: 0.9;">Thanh toán qua</div>
+                <div style="font-size: 22px; font-weight: 800; letter-spacing: 0.02em;">MoMo QR</div>
+            </div>
+            <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.16); display:flex; align-items:center; justify-content:center; font-size: 24px;">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+        </div>
+        <div style="padding: 22px; text-align: center;">
+           
+            <p style="margin: 0 0 12px; color: #334155; line-height: 1.55;">Quét mã QR bên dưới bằng MoMo để thanh toán cho đơn hàng.</p>
+            <img id="momo-qr-image" src="" alt="Mã QR MoMo" style="width: 280px; max-width: 100%; aspect-ratio: 1; object-fit: contain; border: 10px solid #f8fafc; border-radius: 18px; background: #fff; box-shadow: inset 0 0 0 1px #e2e8f0;">
+            <div style="margin-top: 16px; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; color: #334155; font-size: 14px; line-height: 1.7;">
+                <div><strong>Ví nhận:</strong> MoMo - LUMINA COSMETICS</div>
+                <div><strong>Số điện thoại:</strong> 0909 123 456</div>
+                <div><strong>Nội dung:</strong> LUMINA [Số điện thoại của bạn]</div>
+            </div>
+            <div style="display:flex; gap: 10px; margin-top: 18px;">
+                <button type="button" id="btn-close-momo-qr" style="flex: 1; background: #e2e8f0; color: #334155; border: none; border-radius: 10px; padding: 12px 16px; cursor: pointer; font-weight: 700;">Đóng</button>
+                <button type="button" id="btn-confirm-momo-paid" style="flex: 1; background: #a50064; color: #fff; border: none; border-radius: 10px; padding: 12px 16px; cursor: pointer; font-weight: 700;">Tôi đã chuyển khoản</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="map-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="background: #fff; border-radius: 12px; width: 90%; max-width: 800px; height: 90%; max-height: 700px; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);">
+        <div style="padding: 20px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; font-size: 18px; color: #333;">Chọn vị trí giao hàng</h3>
+            <button type="button" id="btn-close-map" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">✕</button>
+        </div>
+        <div style="flex: 1; position: relative; overflow: hidden;">
+            <div id="modal-map" style="width: 100%; height: 100%;"></div>
+        </div>
+        <div style="padding: 15px; border-top: 1px solid #e0e0e0; display: flex; gap: 10px; justify-content: space-between;">
+            <button type="button" id="btn-current-location-modal" style="background: #2c3e50; color: #fff; border: none; border-radius: 6px; padding: 10px 16px; cursor: pointer;">
+                <i class="fa-solid fa-location-crosshairs"></i> Vị trí hiện tại
+            </button>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" id="btn-cancel-map" style="background: #95a5a6; color: #fff; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer;">
+                    Hủy
+                </button>
+                <button type="button" id="btn-confirm-map" style="background: #D4A373; color: #fff; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer;">
+                    Xác nhận
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 $(document).ready(function() {
-    fetch('https://provinces.open-api.vn/api/?depth=1').then(res => res.json()).then(data => {
-        data.forEach(item => $('#province').append(`<option value="${item.code}">${item.name}</option>`));
-    });
+    const subtotal = <?= (int) $total_price ?>;
+    let shippingFee = 0;
+    let marker = null;
+    let modalMap = null;
+    let searchTimer = null;
+    let pendingOrderData = null;
 
-    $('#province').change(function() {
-        const code = $(this).val();
-        $('#district, #ward').html('<option value="">Chọn...</option>');
-        if(code) {
-            fetch(`https://provinces.open-api.vn/api/p/${code}?depth=2`).then(res => res.json())
-                .then(data => data.districts.forEach(item => $('#district').append(`<option value="${item.code}">${item.name}</option>`)));
+    const shopLocation = {
+        lat: <?= SHOP_LAT ?>,
+        lng: <?= SHOP_LNG ?>,
+        name: '<?= addslashes(SHOP_NAME) ?>'
+    };
+
+    const leafletReady = typeof window.L !== 'undefined';
+
+    function ensureLeafletReady() {
+        if (!leafletReady) {
+            Swal.fire({ icon: 'error', title: 'Lỗi bản đồ', text: 'Không tải được thư viện bản đồ Leaflet.' });
+            return false;
         }
-    });
 
-    $('#district').change(function() {
-        const code = $(this).val();
-        $('#ward').html('<option value="">Chọn...</option>');
-        if(code) {
-            fetch(`https://provinces.open-api.vn/api/d/${code}?depth=2`).then(res => res.json())
-                .then(data => data.wards.forEach(item => $('#ward').append(`<option value="${item.code}">${item.name}</option>`)));
-        }
-    });
+        return true;
+    }
 
-    $('input[name="payment_method"]').change(function() {
-        $(this).val() === 'banking' ? $('#bank-info').slideDown() : $('#bank-info').slideUp();
-    });
+    function formatMoney(value) {
+        return Number(value).toLocaleString('vi-VN') + 'đ';
+    }
 
-    $('#checkout-form').submit(function(e) {
-        e.preventDefault();
-        const fullAddress = `${$('#street').val()}, ${$('#ward option:selected').text()}, ${$('#district option:selected').text()}, ${$('#province option:selected').text()}`;
-        
-        const orderData = {
+    function collectOrderData() {
+        const mapAddress = $('#map-address').val().trim();
+        return {
             fullname: $('#fullname').val(),
-            phone: $('#phone').val(),      
+            phone: $('#phone').val(),
             email: $('#email').val(),
-            address: fullAddress,
+            address: mapAddress,
             note: $('#note').val(),
             payment_method: $('input[name="payment_method"]:checked').val(),
-            total_price: <?= $total_price ?> 
+            subtotal_price: subtotal,
+            shipping_fee: shippingFee,
+            customer_lat: $('#customer-lat').val(),
+            customer_lng: $('#customer-lng').val(),
+            total_price: subtotal + shippingFee
         };
+    }
 
+    function buildMomoQrUrl(orderData) {
+        const paymentText = [
+            'MO MO THANH TOAN',
+            'Merchant: LUMINA COSMETICS',
+            'Phone: 0909123456',
+            'Content: LUMINA ' + (orderData.phone || ''),
+            'Total: ' + formatMoney(orderData.total_price)
+        ].join('\n');
+
+        return 'https://quickchart.io/qr?size=320&text=' + encodeURIComponent(paymentText);
+    }
+
+    function openMomoQrModal(orderData) {
+        pendingOrderData = orderData;
+        $('#momo-qr-image').attr('src', buildMomoQrUrl(orderData));
+        $('#momo-qr-modal').css('display', 'flex');
+    }
+
+    function closeMomoQrModal() {
+        $('#momo-qr-modal').hide();
+    }
+
+    function submitOrder(orderData) {
         $('.btn-order').text('ĐANG XỬ LÝ...').prop('disabled', true);
 
         $.ajax({
@@ -225,22 +346,298 @@ $(document).ready(function() {
             data: orderData,
             success: function(response) {
                 let res;
-                try { res = (typeof response === 'object') ? response : JSON.parse(response); } 
-                catch(e) { alert('Lỗi dữ liệu trả về!'); $('.btn-order').text('XÁC NHẬN ĐẶT HÀNG').prop('disabled', false); return; }
+                try { res = (typeof response === 'object') ? response : JSON.parse(response); }
+                catch(e) { Swal.fire({ icon: 'error', title: 'Lỗi dữ liệu', text: 'Lỗi dữ liệu trả về!' }); $('.btn-order').text('XÁC NHẬN ĐẶT HÀNG').prop('disabled', false); return; }
 
                 if(res.status === 'success') {
-                    alert('Đặt hàng thành công! Mã đơn: #' + res.order_id);
-                    window.location.href = 'order_history.php'; 
+                    const orderDisplay = res.order_code || res.order_id;
+                    Swal.fire({ icon: 'success', title: 'Đặt hàng thành công', text: 'Mã đơn: #' + orderDisplay, timer: 1800, showConfirmButton: false }).then(() => {
+                        window.location.href = 'order_history.php';
+                    });
                 } else {
-                    alert('Lỗi: ' + res.message);
+                    Swal.fire({ icon: 'error', title: 'Đặt hàng thất bại', text: 'Lỗi: ' + res.message });
                     $('.btn-order').text('XÁC NHẬN ĐẶT HÀNG').prop('disabled', false);
                 }
             },
             error: function() {
-                alert('Lỗi kết nối máy chủ!');
+                Swal.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Lỗi kết nối máy chủ!' });
                 $('.btn-order').text('XÁC NHẬN ĐẶT HÀNG').prop('disabled', false);
             }
         });
+    }
+
+    function updateTotals() {
+        $('#shipping-price').text(formatMoney(shippingFee));
+        $('#grand-total').text(formatMoney(subtotal + shippingFee));
+    }
+
+    function reverseGeocode(lat, lng) {
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&lat=' + encodeURIComponent(lat) + '&lon=' + encodeURIComponent(lng);
+
+        return fetch(url, {
+            headers: {
+                'Accept-Language': 'vi'
+            }
+        }).then((response) => {
+            if (!response.ok) {
+                throw new Error('Reverse geocode failed');
+            }
+
+            return response.json();
+        });
+    }
+
+    function forwardGeocode(query) {
+        const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=5&q=' + encodeURIComponent(query);
+
+        return fetch(url, {
+            headers: {
+                'Accept-Language': 'vi'
+            }
+        }).then((response) => {
+            if (!response.ok) {
+                throw new Error('Search failed');
+            }
+
+            return response.json();
+        }).then((items) => {
+            return (Array.isArray(items) ? items : []).map((result) => ({
+                display_name: result.display_name,
+                lat: result.lat,
+                lon: result.lon
+            }));
+        });
+    }
+
+    function requestShippingQuote(lat, lng) {
+        return $.post('../backend/shipping_quote.php', { lat, lng });
+    }
+
+    function setMarker(lat, lng) {
+        // Ensure modal map is initialized
+        if (modalMap === null) {
+            $('#map-modal').css('display', 'flex');
+            initMapModal();
+        }
+        
+        if (marker) {
+            marker.setLatLng([parseFloat(lat), parseFloat(lng)]);
+        } else {
+            marker = L.marker([parseFloat(lat), parseFloat(lng)]).addTo(modalMap);
+        }
+        modalMap.setView([parseFloat(lat), parseFloat(lng)], modalMap.getZoom() || 15);
+        $('#customer-lat').val(lat);
+        $('#customer-lng').val(lng);
+
+        reverseGeocode(lat, lng)
+            .then((geo) => {
+                const displayAddress = geo.display_name || 'Đã chọn vị trí trên bản đồ';
+                $('#map-address').val(displayAddress);
+                $('#map-address-preview').text('Địa chỉ từ bản đồ: ' + displayAddress);
+                $('#address-search').val(displayAddress);
+            })
+            .catch(() => {
+                $('#map-address').val('Đã chọn vị trí trên bản đồ');
+                $('#map-address-preview').text('Đã chọn vị trí trên bản đồ (không đọc được địa chỉ chi tiết).');
+            });
+
+        requestShippingQuote(lat, lng)
+            .done((resp) => {
+                const res = (typeof resp === 'object') ? resp : JSON.parse(resp);
+                if (res.status === 'success') {
+                    shippingFee = Number(res.shipping_fee || 0);
+                    $('#distance-preview').text('Khoảng cách tạm tính: ' + Number(res.distance_km).toFixed(2) + ' km');
+                    updateTotals();
+                } else {
+                    Swal.fire({ icon: 'warning', title: 'Không thể tính phí', text: res.message || 'Không thể tính phí vận chuyển.' });
+                }
+            })
+            .fail(() => {
+                Swal.fire({ icon: 'error', title: 'Lỗi kết nối', text: 'Không thể kết nối máy chủ để tính phí vận chuyển.' });
+            });
+    }
+
+    function initMapModal() {
+        if (modalMap !== null) return;
+
+        if (!ensureLeafletReady()) {
+            return;
+        }
+
+        modalMap = L.map('modal-map', {
+            zoomControl: true,
+            scrollWheelZoom: true
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(modalMap);
+
+        modalMap.setView([shopLocation.lat, shopLocation.lng], 15);
+
+        modalMap.on('click', function(event) {
+            setMarker(event.latlng.lat, event.latlng.lng);
+        });
+
+        marker = L.marker([shopLocation.lat, shopLocation.lng]).addTo(modalMap);
+    }
+
+    function renderAddressSuggestions(items) {
+        const dropdown = $('#address-suggestions');
+        dropdown.empty();
+
+        if (!Array.isArray(items) || items.length === 0) {
+            dropdown.hide();
+            return;
+        }
+
+        items.forEach((item) => {
+            const button = $('<button type="button"></button>')
+                .css({
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '10px 12px',
+                    border: 'none',
+                    background: '#fff',
+                    borderBottom: '1px solid #eef2f7',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    lineHeight: '1.45',
+                    color: '#334155'
+                })
+                .text(item.display_name)
+                .on('click', function() {
+                    $('#address-search').val(item.display_name);
+                    dropdown.hide();
+                    setMarker(parseFloat(item.lat), parseFloat(item.lon));
+                });
+
+            dropdown.append(button);
+        });
+
+        dropdown.show();
+    }
+
+    $('#address-search').on('input', function() {
+        const query = $(this).val().trim();
+        clearTimeout(searchTimer);
+
+        if (query.length < 3) {
+            $('#address-suggestions').hide().empty();
+            return;
+        }
+
+        searchTimer = setTimeout(function() {
+            forwardGeocode(query).then((items) => {
+                renderAddressSuggestions(items);
+            }).catch(() => {
+                $('#address-suggestions').hide().empty();
+            });
+        }, 300);
+    });
+
+    $('#address-search').on('focus', function() {
+        if ($(this).val().trim().length >= 3 && $('#address-suggestions').children().length > 0) {
+            $('#address-suggestions').show();
+        }
+    });
+
+    $('#btn-open-map').click(function() {
+        $('#map-modal').css('display', 'flex');
+        if (modalMap === null) {
+            initMapModal();
+        } else {
+            modalMap.invalidateSize();
+            modalMap.setView([
+                parseFloat($('#customer-lat').val() || shopLocation.lat),
+                parseFloat($('#customer-lng').val() || shopLocation.lng)
+            ], modalMap.getZoom() || 15);
+        }
+    });
+
+    $('#btn-close-map, #btn-cancel-map').click(function() {
+        $('#map-modal').hide();
+    });
+
+    $('#btn-confirm-map').click(function() {
+        if ($('#customer-lat').val() && $('#customer-lng').val()) {
+            $('#map-modal').hide();
+        } else {
+            Swal.fire({ icon: 'warning', title: 'Thiếu vị trí', text: 'Vui lòng chọn một vị trí trên bản đồ.' });
+        }
+    });
+
+    $('#btn-current-location-modal').click(function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                setMarker(position.coords.latitude, position.coords.longitude);
+            }, function(error) {
+                Swal.fire({ icon: 'error', title: 'Không lấy được vị trí', text: 'Không thể lấy vị trí hiện tại. Vui lòng cho phép truy cập vị trí.' });
+            });
+        }
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('#address-search').length) {
+            $('#address-suggestions').hide();
+        }
+    });
+
+    updateTotals();
+
+    $('input[name="payment_method"]').change(function() {
+        if ($(this).val() === 'banking') {
+            $('#bank-info').slideDown();
+        } else {
+            $('#bank-info').slideUp();
+            closeMomoQrModal();
+        }
+    });
+
+    $('#btn-show-momo-qr').click(function() {
+        const orderData = collectOrderData();
+        openMomoQrModal(orderData);
+    });
+
+    $('#btn-close-momo-qr').click(function() {
+        closeMomoQrModal();
+    });
+
+    $('#momo-qr-modal').click(function(e) {
+        if (e.target === this) {
+            closeMomoQrModal();
+        }
+    });
+
+    $('#btn-confirm-momo-paid').click(function() {
+        const orderData = pendingOrderData || collectOrderData();
+
+        closeMomoQrModal();
+        submitOrder(orderData);
+    });
+
+    $('#checkout-form').submit(function(e) {
+        e.preventDefault();
+        const orderData = collectOrderData();
+
+        if (!orderData.customer_lat || !orderData.customer_lng) {
+            Swal.fire({ icon: 'warning', title: 'Thiếu vị trí', text: 'Vui lòng tìm và chọn địa chỉ giao hàng từ ô tìm kiếm bản đồ.' });
+            return;
+        }
+
+        if (!orderData.address) {
+            Swal.fire({ icon: 'warning', title: 'Thiếu địa chỉ', text: 'Vui lòng chọn một địa chỉ hợp lệ từ gợi ý tìm kiếm.' });
+            return;
+        }
+
+        if (orderData.payment_method === 'banking') {
+            openMomoQrModal(orderData);
+            return;
+        }
+
+        submitOrder(orderData);
     });
 });
 
@@ -255,9 +652,9 @@ function changeQty(variantId, delta) {
         catch(e) { location.reload(); return; }
 
         if (res.status === 'success') { location.reload(); } 
-        else { alert('Lỗi: ' + res.message); location.reload(); }
+        else { Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Lỗi: ' + res.message }); location.reload(); }
     });
 }
 </script>
 
-<?php include '../includes/footer.php'; ?>
+<?php include_once '../includes/footer.php'; ?>

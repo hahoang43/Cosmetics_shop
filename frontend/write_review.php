@@ -1,6 +1,9 @@
 <?php 
 require_once '../config/database.php';
+require_once '../includes/popup_notify.php';
+$conn = getDatabase();
 require_once '../includes/header.php'; 
+echo popup_assets();
 
 if (!isset($_SESSION['user'])) { header("Location: login.php"); exit; }
 
@@ -54,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt_insert = $conn->prepare("INSERT INTO Product_Review (product_id, user_id, rating, comment, image, video, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())");
     $stmt_insert->execute([$product_id, $user_id, $rating, $comment, $review_image, $review_video]);
     
-    echo "<script>alert('Cảm ơn bạn đã gửi đánh giá kèm hình ảnh/video thực tế!'); window.location.href='order_history.php';</script>";
+    popup_success('Cảm ơn bạn!', 'Đánh giá của bạn đã được gửi kèm hình ảnh/video thực tế.', 'order_history.php');
     exit;
 }
 ?>

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../config/database.php';
+$conn = getDatabase();
 
 // Kiểm tra xem có yêu cầu gửi đến không
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {

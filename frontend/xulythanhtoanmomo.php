@@ -1,6 +1,10 @@
 <?php
 header('Content-type: text/html; charset=utf-8');
 
+require_once __DIR__ . '/../includes/popup_notify.php';
+require_once __DIR__ . '/../config/momo_config.php';
+echo popup_assets();
+
 // Hàm gửi request MoMo
 function execPostRequest($url, $data) {
     $ch = curl_init($url);
@@ -24,21 +28,36 @@ $user_id = isset($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0;
 $amount = isset($_POST['total_amount']) ? (int)$_POST['total_amount'] : 10000;
 $status = 'pending';
 
+function getSiteBaseUrl(): string {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? ($_SERVER['SERVER_NAME'] ?? '127.0.0.1');
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '/Cosmetics_shop/frontend/xulythanhtoanmomo.php';
+    $basePath = rtrim(str_replace('\\', '/', dirname(dirname($scriptName))), '/');
+    if ($basePath === '') {
+        $basePath = '/Cosmetics_shop';
+    }
+
+    return $scheme . '://' . $host . $basePath;
+}
+
 // Lưu đơn hàng vào database
-require_once '../backend/database.php';
+require_once __DIR__ . '/../backend/database.php';
+if (!class_exists('Database')) {
+    die('Database class not found');
+}
 $db = new Database();
 $conn = $db->link;
 $sql = "INSERT INTO orders (user_id, total_money, status) VALUES ($user_id, $amount, '$status')";
 $conn->query($sql);
 
 // Tạo dữ liệu MoMo
-$partnerCode = 'MOMOBKUN20180529';
-$accessKey = 'klm05TvNBzhg7h7j';
-$secretKey = 'at67qH6mk8w5Y1nAyMoYKMWACiEi2bsa';
+$partnerCode = defined('MOMO_PARTNER_CODE') ? MOMO_PARTNER_CODE : '';
+$accessKey = defined('MOMO_ACCESS_KEY') ? MOMO_ACCESS_KEY : '';
+$secretKey = defined('MOMO_SECRET_KEY') ? MOMO_SECRET_KEY : '';
 $orderInfo = "Thanh toán qua MoMo";
 $orderId = time() . "";
-$redirectUrl = "http://localhost/Website-Sneaker/page/thanhtoan.php";
-$ipnUrl = "http://localhost/Website-Sneaker/page/thanhtoan.php";
+$redirectUrl = getSiteBaseUrl() . "/frontend/order_history.php";
+$ipnUrl = getSiteBaseUrl() . "/frontend/order_history.php";
 $extraData = "";
 $requestId = time() . "";
 $requestType = "captureWallet";
@@ -65,12 +84,11 @@ $result = execPostRequest("https://test-payment.momo.vn/v2/gateway/api/create", 
 $jsonResult = json_decode($result, true);
 
 if (isset($jsonResult['payUrl'])) {
-    header('Location: ' . $jsonResult['payUrl']);
+    popup_success('Đang chuyển sang MoMo', 'Hệ thống sẽ chuyển bạn đến cổng thanh toán MoMo để hoàn tất giao dịch.', $jsonResult['payUrl'], 1200);
     exit();
 } else {
-    echo '<h2 style="color:red;text-align:center;">Lỗi khi tạo thanh toán MoMo!</h2>';
+    popup_error('Lỗi thanh toán MoMo', 'Không thể tạo liên kết thanh toán. Vui lòng thử lại sau hoặc chọn phương thức khác.');
     if (isset($jsonResult['message'])) {
-        echo '<p style="text-align:center;">' . htmlspecialchars($jsonResult['message']) . '</p>';
+        echo '<p style="text-align:center; color:#64748b;">' . htmlspecialchars($jsonResult['message']) . '</p>';
     }
 }
-?>

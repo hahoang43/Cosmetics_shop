@@ -1,5 +1,6 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/admin_header.php'; 
 
 // --- 1. XỬ LÝ DUYỆT / TRẢ LỜI CÂU HỎI ---
@@ -67,7 +68,7 @@ $list_qa = $stmt->fetchAll();
                     <tr style="border-bottom: 1px solid #eee; background: <?= empty($row['answer']) ? '#fffdf6' : '#fff' ?>;">
                         <td style="padding: 12px;">
                             <div style="display: flex; align-items: center; gap: 10px;">
-                                <img src="../assets/uploads/products/<?= htmlspecialchars($row['thumbnail']) ?>" width="45" style="border-radius: 4px; border: 1px solid #ddd;" onerror="this.src='https://via.placeholder.com/45';">
+                                <img src="<?= htmlspecialchars(imageSrc($row['thumbnail'] ?? '', 'products')) ?>" width="45" style="border-radius: 4px; border: 1px solid #ddd;" onerror="this.onerror=null;this.src='<?= htmlspecialchars(noImageSrc('No Image')) ?>';">
                                 <span style="font-size: 13px; font-weight: bold; color: #333; max-width: 180px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                                     <?= htmlspecialchars($row['product_title']) ?>
                                 </span>

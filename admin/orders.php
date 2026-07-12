@@ -1,6 +1,7 @@
-<?php 
+<?php
 require_once '../config/database.php';
-require_once '../includes/admin_header.php'; 
+$conn = getDatabase();
+require_once '../includes/admin_header.php';
 
 // --- XỬ LÝ CẬP NHẬT TRẠNG THÁI VÀ TỒN KHO ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
@@ -31,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
                     $stmt_restore = $conn->prepare("UPDATE Product_Variant SET quantity = quantity + ? WHERE id = ?");
                     $stmt_restore->execute([$item['num'], $item['product_variant_id']]);
                 }
-            } 
+            }
             // Khôi phục từ Hủy/Hoàn trả về giao bình thường => TRỪ LẠI KHO
             elseif (($old_status == 3 || $old_status == 5) && $new_status != 3 && $new_status != 5) {
                 foreach ($items as $item) {
@@ -50,9 +51,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
     }
 }
 
+// --- TÌM KIẾM ĐƠN HÀNG ---
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search_param = [];
+$where_clause = '';
+
+// Kiểm tra xem cột order_code có tồn tại không
+$stmt_check_column = $conn->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Orders' AND COLUMN_NAME='order_code' AND TABLE_SCHEMA=?");
+$stmt_check_column->execute(['db_mypham']);
+$column_exists = $stmt_check_column->rowCount() > 0;
+
+// Nếu cột chưa tồn tại, tạo nó
+if (!$column_exists) {
+    try {
+        $conn->exec("ALTER TABLE Orders ADD COLUMN order_code VARCHAR(7) DEFAULT NULL UNIQUE");
+        $column_exists = true;
+    } catch(Exception $e) {
+        // Cột có thể đã được tạo bởi request khác, bỏ qua lỗi
+    }
+}
+
+if (!empty($search)) {
+    if ($column_exists) {
+        $where_clause = "WHERE (order_code LIKE ? OR fullname LIKE ?)";
+        $search_param = ["%$search%", "%$search%"];
+    } else {
+        $where_clause = "WHERE fullname LIKE ?";
+        $search_param = ["%$search%"];
+    }
+}
+
 // --- LẤY DANH SÁCH ĐƠN HÀNG MỚI NHẤT ---
-$stmt = $conn->prepare("SELECT * FROM Orders ORDER BY id DESC");
-$stmt->execute();
+$stmt = $conn->prepare("SELECT * FROM Orders $where_clause ORDER BY id DESC");
+$stmt->execute($search_param);
 $orders = $stmt->fetchAll();
 ?>
 
@@ -61,6 +92,22 @@ $orders = $stmt->fetchAll();
     <span style="background: #2c3e50; color: #fff; padding: 5px 15px; border-radius: 20px; font-size: 14px;">
         Tổng số: <strong><?= count($orders) ?></strong> đơn
     </span>
+</div>
+
+<!-- Search Box -->
+<div style="margin-bottom: 20px;">
+    <form method="GET" style="display: flex; gap: 10px; align-items: center;">
+        <input type="text" name="search" placeholder="Tìm kiếm theo mã đơn hàng hoặc tên khách hàng..." value="<?= htmlspecialchars($search) ?>" 
+               style="flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+        <button type="submit" style="background: #D4A373; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+            <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+        </button>
+        <?php if(!empty($search)): ?>
+            <a href="orders.php" style="background: #95a5a6; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                <i class="fa-solid fa-xmark"></i> Xóa lọc
+            </a>
+        <?php endif; ?>
+    </form>
 </div>
 
 <div class="admin-table-container">
@@ -80,7 +127,7 @@ $orders = $stmt->fetchAll();
             <?php if(count($orders) > 0): ?>
                 <?php foreach($orders as $row): ?>
                     <tr>
-                        <td><strong>#<?= $row['id'] ?></strong></td>
+                        <td><strong>#<?= htmlspecialchars(!empty($row['order_code']) ? $row['order_code'] : $row['id']) ?></strong></td>
                         <td><?= htmlspecialchars($row['fullname']) ?></td>
                         <td><?= htmlspecialchars($row['phone_number']) ?></td>
                         <td style="color: #D4A373; font-weight: bold;">
@@ -88,7 +135,7 @@ $orders = $stmt->fetchAll();
                         </td>
                         
                         <td>
-                            <?php 
+                            <?php
                                 $status = $row['status'];
                                 $badge_style = '';
                                 $status_text = '';

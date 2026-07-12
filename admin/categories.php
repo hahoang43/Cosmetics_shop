@@ -1,5 +1,6 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/admin_header.php'; 
 
 // --- 1. XỬ LÝ THÊM DANH MỤC MỚI ---

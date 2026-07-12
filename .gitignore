@@ -1,12 +1,5 @@
-# Ignore all image files in the repository
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.webp
-*.bmp
-*.tiff
-*.svg
+
 
 # Ignore all files in the uploads directory
 assets/uploads/
+.env

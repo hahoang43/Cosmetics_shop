@@ -1,5 +1,6 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/admin_header.php';
 
 $stmt_cat = $conn->query("SELECT * FROM Category");

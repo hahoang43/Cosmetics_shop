@@ -1,5 +1,6 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/admin_header.php'; 
 
 // --- XỬ LÝ TẢI BANNER MỚI LÊN ---
@@ -88,7 +89,7 @@ $banners = $stmt_banners->fetchAll();
                     <?php foreach($banners as $b): ?>
                         <tr>
                             <td>
-                                <img src="../assets/uploads/banners/<?= htmlspecialchars($b['image']) ?>" style="max-width: 300px; max-height: 120px; border-radius: 5px; border: 1px solid #ddd; object-fit: cover;" onerror="this.src='https://via.placeholder.com/300x120?text=No+Image';">
+                                <img src="/Cosmetics_shop/assets/uploads/banners/<?= htmlspecialchars($b['image']) ?>" style="max-width: 300px; max-height: 120px; border-radius: 5px; border: 1px solid #ddd; object-fit: cover;" onerror="this.onerror=null;this.src='<?= htmlspecialchars(noImageSrc('No Image')) ?>';">
                             </td>
                             <td style="text-align: center; vertical-align: middle;">
                                 <button type="button" class="btn-action" style="background: #e74c3c; color: white;" onclick="if(confirm('Bạn có chắc muốn xóa Banner này?')) window.location.href='banners.php?delete_id=<?= $b['id'] ?>'">

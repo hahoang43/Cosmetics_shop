@@ -1,5 +1,6 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/header.php'; 
 
 // 1. Kiểm tra đăng nhập
@@ -28,15 +29,33 @@ if ($status_filter >= 0) {
 if ($search !== '') {
     $clean_search = ltrim($search, '#');
     
-    $sql .= " AND (id LIKE ? OR fullname LIKE ? OR phone_number LIKE ? OR id IN (
-        SELECT order_id FROM Order_Details od 
-        JOIN Product p ON od.product_id = p.id 
-        WHERE p.title LIKE ?
-    ))";
-    $params[] = "%$clean_search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
+    // Kiểm tra xem cột order_code có tồn tại không
+    $stmt_check = $conn->prepare("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='Orders' AND COLUMN_NAME='order_code' AND TABLE_SCHEMA=?");
+    $stmt_check->execute(['db_mypham']);
+    $has_order_code = $stmt_check->rowCount() > 0;
+    
+    if ($has_order_code) {
+        $sql .= " AND (order_code LIKE ? OR id LIKE ? OR fullname LIKE ? OR phone_number LIKE ? OR id IN (
+            SELECT order_id FROM Order_Details od 
+            JOIN Product p ON od.product_id = p.id 
+            WHERE p.title LIKE ?
+        ))";
+        $params[] = "%$clean_search%";
+        $params[] = "%$clean_search%";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+    } else {
+        $sql .= " AND (id LIKE ? OR fullname LIKE ? OR phone_number LIKE ? OR id IN (
+            SELECT order_id FROM Order_Details od 
+            JOIN Product p ON od.product_id = p.id 
+            WHERE p.title LIKE ?
+        ))";
+        $params[] = "%$clean_search%";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+        $params[] = "%$search%";
+    }
 }
 
 $sql .= " ORDER BY id DESC";
@@ -45,7 +64,7 @@ $stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $orders = $stmt->fetchAll();
 ?>
-<link rel="stylesheet" href="../assets/css/profile.css">
+<link rel="stylesheet" href="/Cosmetics_shop/assets/css/profile.css">
 <div class="container">
     <div class="profile-container">
         
@@ -132,7 +151,7 @@ $orders = $stmt->fetchAll();
                             ?>
                                 <tr>
                                     <td style="padding: 15px; border-bottom: 1px solid #eee; vertical-align: top;">
-                                        <strong>#<?= $row['id'] ?></strong>
+                                        <strong>#<?= htmlspecialchars(!empty($row['order_code']) ? $row['order_code'] : $row['id']) ?></strong>
                                         <div style="font-size: 11px; color: #999; margin-top: 6px; white-space: nowrap;">
                                             <?= date('d/m/Y', strtotime($row['order_date'])) ?>
                                         </div>
@@ -141,11 +160,13 @@ $orders = $stmt->fetchAll();
                                     <td style="padding: 15px; border-bottom: 1px solid #eee; vertical-align: top;">
                                         <?php if (count($items) > 0): ?>
                                             <div style="display: flex; align-items: center; gap: 12px;">
-                                                <img src="../assets/uploads/products/<?= htmlspecialchars($items[0]['thumbnail']) ?>" width="45" height="45" style="object-fit: cover; border-radius: 4px; border: 1px solid #eee;" onerror="this.src='https://via.placeholder.com/45';">
+                                                <a href="product_detail.php?id=<?= (int)$items[0]['product_id'] ?>" style="display: inline-flex;">
+                                                    <img src="<?= htmlspecialchars(imageSrc($items[0]['thumbnail'] ?? '', 'products')) ?>" width="45" height="45" style="object-fit: cover; border-radius: 4px; border: 1px solid #eee;" onerror="this.onerror=null;this.src='<?= htmlspecialchars(noImageSrc('No Image')) ?>';">
+                                                </a>
                                                 <div style="line-height: 1.4;">
-                                                    <span style="font-weight: 500; font-size: 13.5px; color: #333; display: block; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                    <a href="product_detail.php?id=<?= (int)$items[0]['product_id'] ?>" style="font-weight: 500; font-size: 13.5px; color: #333; display: block; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none;" title="<?= htmlspecialchars($items[0]['title']) ?>">
                                                         <?= htmlspecialchars($items[0]['title']) ?>
-                                                    </span>
+                                                    </a>
                                                     <span style="font-size: 12px; color: #777;">
                                                         Phân loại: <?= htmlspecialchars($items[0]['variant_name']) ?> <strong style="color:#444; margin-left:5px;">x<?= $items[0]['num'] ?></strong>
                                                     </span>
@@ -156,11 +177,13 @@ $orders = $stmt->fetchAll();
                                                 <div id="more-products-<?= $row['id'] ?>" style="display: none; margin-top: 12px; border-top: 1px dashed #eee; padding-top: 12px;">
                                                     <?php for ($i = 1; $i < count($items); $i++): ?>
                                                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                                                            <img src="../assets/uploads/products/<?= htmlspecialchars($items[$i]['thumbnail']) ?>" width="45" height="45" style="object-fit: cover; border-radius: 4px; border: 1px solid #eee;" onerror="this.src='https://via.placeholder.com/45';">
+                                                            <a href="product_detail.php?id=<?= (int)$items[$i]['product_id'] ?>" style="display: inline-flex;">
+                                                                <img src="<?= htmlspecialchars(imageSrc($items[$i]['thumbnail'] ?? '', 'products')) ?>" width="45" height="45" style="object-fit: cover; border-radius: 4px; border: 1px solid #eee;" onerror="this.onerror=null;this.src='<?= htmlspecialchars(noImageSrc('No Image')) ?>';">
+                                                            </a>
                                                             <div style="line-height: 1.4;">
-                                                                <span style="font-weight: 500; font-size: 13.5px; color: #333; display: block; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                                                <a href="product_detail.php?id=<?= (int)$items[$i]['product_id'] ?>" style="font-weight: 500; font-size: 13.5px; color: #333; display: block; max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none;" title="<?= htmlspecialchars($items[$i]['title']) ?>">
                                                                     <?= htmlspecialchars($items[$i]['title']) ?>
-                                                                </span>
+                                                                </a>
                                                                 <span style="font-size: 12px; color: #777;">
                                                                     Phân loại: <?= htmlspecialchars($items[$i]['variant_name']) ?> <strong style="color:#444; margin-left:5px;">x<?= $items[$i]['num'] ?></strong>
                                                                 </span>

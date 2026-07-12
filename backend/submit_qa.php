@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../config/database.php';
+$conn = getDatabase();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $product_id = isset($_POST['product_id']) ? (int)$_POST['product_id'] : 0;

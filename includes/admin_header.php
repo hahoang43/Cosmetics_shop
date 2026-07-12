@@ -1,6 +1,12 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once '../config/database.php';
+require_once __DIR__ . '/image_helper.php';
+
+// Determine current admin page filename for active menu highlighting
+$currentAdminPage = basename($_SERVER['PHP_SELF']);
 
 // Tạm thời comment đoạn kiểm tra Admin lại để bạn test giao diện trước
 // if (!isset($_SESSION['admin'])) {
@@ -15,7 +21,7 @@ require_once '../config/database.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumina - Quản trị hệ thống</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/admin.css">
+    <link rel="stylesheet" href="/Cosmetics_shop/assets/css/admin.css">
 </head>
 <body>
 
@@ -25,16 +31,18 @@ require_once '../config/database.php';
             LUMINA<span>.</span>
         </div>
         <ul class="sidebar-menu">
-            <li><a href="index.php" class="active"><i class="fa-solid fa-gauge"></i> Tổng quan</a></li>
-            <li><a href="banners.php"><i class="fa-solid fa-images"></i> Banner</a></li>
-            <li><a href="orders.php"><i class="fa-solid fa-cart-flatbed"></i> Đơn hàng</a></li>
-            <li><a href="products.php"><i class="fa-solid fa-box-open"></i> Sản phẩm</a></li>
-            <li><a href="categories.php"><i class="fa-solid fa-layer-group"></i> Danh mục</a></li>
-            <li><a href="users.php"><i class="fa-solid fa-users"></i> Khách hàng</a></li>
-            <li><a href="reviews.php"><i class="fa-solid fa-star"></i> Đánh giá</a></li>
-            <li><a href="feedbacks.php"><i class="fa-solid fa-message"></i> Phản hồi</a></li>
-            <li><a href="qa.php"><i class="fa-solid fa-question"></i> Hỏi đáp</a></li>
-            <li><a href="logout.php" style="color: #e74c3c; margin-top: 20px;"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a></li>
+            <li><a href="index.php" class="<?= $currentAdminPage === 'index.php' ? 'active' : '' ?>"><i class="fa-solid fa-gauge"></i> Tổng quan</a></li>
+            <li><a href="banners.php" class="<?= preg_match('/banner/i', $currentAdminPage) ? 'active' : '' ?>"><i class="fa-solid fa-images"></i> Banner</a></li>
+            <li><a href="orders.php" class="<?= preg_match('/order/i', $currentAdminPage) ? 'active' : '' ?>"><i class="fa-solid fa-cart-flatbed"></i> Đơn hàng</a></li>
+            <li><a href="products.php" class="<?= preg_match('/product/i', $currentAdminPage) ? 'active' : '' ?>"><i class="fa-solid fa-box-open"></i> Sản phẩm</a></li>
+            <li><a href="trash_products.php" class="<?= $currentAdminPage === 'trash_products.php' ? 'active' : '' ?>"><i class="fa-solid fa-trash-can"></i> Thùng rác</a></li>
+            <li><a href="categories.php" class="<?= preg_match('/category/i', $currentAdminPage) ? 'active' : '' ?>"><i class="fa-solid fa-layer-group"></i> Danh mục</a></li>
+            <li><a href="users.php" class="<?= preg_match('/user/i', $currentAdminPage) ? 'active' : '' ?>"><i class="fa-solid fa-users"></i> Khách hàng</a></li>
+            <li><a href="reviews.php" class="<?= preg_match('/review/i', $currentAdminPage) ? 'active' : '' ?>"><i class="fa-solid fa-star"></i> Đánh giá</a></li>
+            <li><a href="feedbacks.php" class="<?= preg_match('/feedback/i', $currentAdminPage) ? 'active' : '' ?>"><i class="fa-solid fa-message"></i> Phản hồi</a></li>
+            <li><a href="qa.php" class="<?= preg_match('/\bqa\b/i', $currentAdminPage) ? 'active' : '' ?>"><i class="fa-solid fa-question"></i> Hỏi đáp</a></li>
+            <li><a href="settings.php" class="<?= $currentAdminPage === 'settings.php' ? 'active' : '' ?>"><i class="fa-solid fa-gear"></i> Cài đặt</a></li>
+            <li><a href="logout.php" style="color: #e74c3c; margin-top: 20px;" class="<?= $currentAdminPage === 'logout.php' ? 'active' : '' ?>"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a></li>
         </ul>
     </aside>
 

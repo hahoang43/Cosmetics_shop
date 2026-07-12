@@ -1,6 +1,8 @@
 <?php 
 // 1. Nạp file kết nối database
 require_once '../config/database.php';
+require_once '../includes/popup_notify.php';
+$conn = getDatabase();
 
 // 2. Lấy ID sản phẩm từ URL (vd: ?id=1). Nếu không có thì mặc định là 0
 $id_san_pham = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -12,7 +14,7 @@ $product = $stmt->fetch();
 
 // Nếu không tìm thấy sản phẩm, chuyển hướng về trang chủ
 if (!$product) {
-    header("Location: ../frontend/index.php");
+    header("Location: /Cosmetics_shop/frontend/index.php");
     exit;
 }
 
@@ -66,6 +68,8 @@ $related_products = $stmt_related->fetchAll();
 include '../includes/header.php'; 
 ?>
 
+<?php echo popup_assets(); ?>
+
 <style>
     .variant-selection { margin-bottom: 25px; }
     .variant-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
@@ -85,21 +89,21 @@ include '../includes/header.php';
 <main class="container product-detail-container">
     <div class="product-main">
         <div class="product-images">
-            <div class="main-img">
-                <img src="../assets/uploads/products/<?php echo htmlspecialchars($product['thumbnail']); ?>" id="big-img" alt="<?php echo htmlspecialchars($product['title']); ?>" style="width: 100%; max-height: 400px; object-fit: contain; border: 1px solid #eee; border-radius: 8px;">
+            <div class="main-img" style="aspect-ratio: 1; overflow: hidden; margin-bottom: 15px;">
+                <img src="<?php echo htmlspecialchars(imageSrc($product['thumbnail'] ?? '', 'products')); ?>" id="big-img" alt="<?php echo htmlspecialchars($product['title']); ?>" style="width: 100%; height: 100%; object-fit: contain; border: 1px solid #eee; border-radius: 8px; display: block;">
             </div>
 
             <div class="gallery-thumbnails">
-                <img src="../assets/uploads/products/<?php echo htmlspecialchars($product['thumbnail']); ?>" class="thumb-img active" alt="main-thumb">
+                <img src="<?php echo htmlspecialchars(imageSrc($product['thumbnail'] ?? '', 'products')); ?>" class="thumb-img active" alt="main-thumb">
                 
                 <?php foreach ($variants as $v): ?>
                     <?php if(!empty($v['variant_img'])): ?>
-                        <img src="../assets/uploads/products/<?= htmlspecialchars($v['variant_img']) ?>" class="thumb-img" data-variant-id="<?= $v['pv_id'] ?>" alt="variant-thumb">
+                        <img src="<?= htmlspecialchars(imageSrc($v['variant_img'] ?? '', 'products')) ?>" class="thumb-img" data-variant-id="<?= $v['pv_id'] ?>" alt="variant-thumb">
                     <?php endif; ?>
                 <?php endforeach; ?>
 
                 <?php foreach ($gallery as $gal): ?>
-                    <img src="../assets/uploads/products/<?php echo htmlspecialchars($gal['thumbnail']); ?>" class="thumb-img" alt="gallery-thumb">
+                    <img src="<?php echo htmlspecialchars(imageSrc($gal['thumbnail'] ?? '', 'products')); ?>" class="thumb-img" alt="gallery-thumb">
                 <?php endforeach; ?>
             </div>
         </div>
@@ -119,7 +123,7 @@ include '../includes/header.php';
                                 <input type="radio" name="product_variant" value="<?= $v['pv_id'] ?>" 
                                        data-price="<?= $v['price'] ?>" 
                                        data-old-price="<?= $v['old_price'] ?>"
-                                       data-image="../assets/uploads/products/<?= htmlspecialchars($v_img) ?>"
+                                       data-image="<?= htmlspecialchars(imageSrc($v_img, 'products')) ?>"
                                        <?= $index === 0 ? 'checked' : '' ?>>
                                 <span><?= htmlspecialchars($v['variant_name']) ?></span>
                             </label>
@@ -140,6 +144,9 @@ include '../includes/header.php';
                 <?php if (count($variants) > 0): ?>
                     <button class="btn-add-cart" onclick="addToCart(<?php echo $product['id']; ?>)">
                         THÊM VÀO GIỎ HÀNG
+                    </button>
+                    <button class="btn-buy-now" style="background:#2c3e50;color:#fff;border:none;padding:0 24px;border-radius:6px;cursor:pointer;font-weight:700;margin-left:8px;" onclick="buyNow(<?php echo $product['id']; ?>)">
+                        MUA NGAY
                     </button>
                 <?php else: ?>
                     <button class="btn-add-cart" disabled style="background: #ccc; cursor: not-allowed;">
@@ -170,7 +177,7 @@ include '../includes/header.php';
             <h3 style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 20px;">Hỏi đáp về sản phẩm</h3>
 
             <?php if (isset($_SESSION['user'])): ?>
-                <form action="../backend/submit_qa.php" method="POST" class="qa-form" style="margin-bottom: 30px; display: flex; gap: 10px;">
+                <form action="/Cosmetics_shop/backend/submit_qa.php" method="POST" class="qa-form" style="margin-bottom: 30px; display: flex; gap: 10px;">
                     <input type="hidden" name="product_id" value="<?= $id_san_pham ?>">
                     <input type="text" name="question" required placeholder="Bạn có thắc mắc gì về sản phẩm này? Đặt câu hỏi ngay..." style="flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 5px; outline: none;">
                     <button type="submit" style="background: #333; color: #fff; border: none; padding: 0 25px; border-radius: 5px; font-weight: bold; cursor: pointer;">
@@ -179,7 +186,7 @@ include '../includes/header.php';
                 </form>
             <?php else: ?>
                 <div style="margin-bottom: 30px;">
-                    <a href="../frontend/login.php" style="display: inline-block; background: #D4A373; color: #fff; padding: 12px 30px; border-radius: 5px; font-weight: bold; text-decoration: none; font-size: 16px;">Đăng nhập/Đăng ký để hỏi đáp về sản phẩm</a>
+                    <a href="/Cosmetics_shop/frontend/login.php" style="display: inline-block; background: #D4A373; color: #fff; padding: 12px 30px; border-radius: 5px; font-weight: bold; text-decoration: none; font-size: 16px;">Đăng nhập/Đăng ký để hỏi đáp về sản phẩm</a>
                 </div>
             <?php endif; ?>
 
@@ -213,13 +220,13 @@ include '../includes/header.php';
             </div>
         </div>
 
-        <div class="product-reviews" style="margin-top: 50px; border-top: 2px solid #eee; padding-top: 30px;">
+        <div id="product-reviews" class="product-reviews" style="margin-top: 50px; border-top: 2px solid #eee; padding-top: 30px;">
             <h3 style="font-family: 'Playfair Display', serif; font-size: 24px; margin-bottom: 20px;">Đánh giá từ khách hàng</h3>
             
             <?php if (count($reviews) > 0): ?>
                 <div class="reviews-list" style="display: flex; flex-direction: column; gap: 20px;">
                     <?php foreach ($reviews as $rv): ?>
-                        <div class="review-item" style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
+                        <div id="review-id-<?= (int)$rv['id'] ?>" class="review-item" style="background: #f9f9f9; padding: 20px; border-radius: 8px;">
                             <div class="review-header" style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                 <strong style="color: #333;"><?= htmlspecialchars($rv['fullname']) ?></strong>
                                 <span class="review-date" style="color: #999; font-size: 13px;"><?= date('d/m/Y', strtotime($rv['created_at'])) ?></span>
@@ -235,11 +242,11 @@ include '../includes/header.php';
                             
                             <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
                                 <?php if (!empty($rv['image'])): ?>
-                                    <img src="../assets/uploads/reviews/<?= htmlspecialchars($rv['image']) ?>" style="max-width: 150px; max-height: 150px; border-radius: 6px; object-fit: cover; border: 1px solid #ddd;">
+                                    <img src="/Cosmetics_shop/assets/uploads/reviews/<?= htmlspecialchars($rv['image']) ?>" style="max-width: 150px; max-height: 150px; border-radius: 6px; object-fit: cover; border: 1px solid #ddd;">
                                 <?php endif; ?>
 
                                 <?php if (!empty($rv['video'])): ?>
-                                    <video src="../assets/uploads/reviews/<?= htmlspecialchars($rv['video']) ?>" controls style="max-width: 240px; max-height: 150px; border-radius: 6px; border: 1px solid #ddd; background: #000;"></video>
+                                    <video src="/Cosmetics_shop/assets/uploads/reviews/<?= htmlspecialchars($rv['video']) ?>" controls style="max-width: 240px; max-height: 150px; border-radius: 6px; border: 1px solid #ddd; background: #000;"></video>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -257,7 +264,7 @@ include '../includes/header.php';
                 <?php foreach ($related_products as $item): ?>
                     <div class="product-card" style="border: 1px solid #eee; padding: 15px; border-radius: 8px; text-align: center;">
                         <a href="product_detail.php?id=<?= $item['id'] ?>" style="text-decoration: none; color: inherit;">
-                            <img src="../assets/uploads/products/<?= htmlspecialchars($item['thumbnail']) ?>" alt="<?= htmlspecialchars($item['title']) ?>" style="width: 100%; border-radius: 5px; margin-bottom: 15px;">
+                            <img src="<?= htmlspecialchars(imageSrc($item['thumbnail'] ?? '', 'products')) ?>" alt="<?= htmlspecialchars($item['title']) ?>" loading="lazy" style="width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 5px; margin-bottom: 15px;">
                             <h4 style="font-size: 14px; margin-bottom: 10px; height: 40px; overflow: hidden;"><?= htmlspecialchars($item['title']) ?></h4>
                             <div class="price">
                                 <span style="color: #D4A373; font-weight: bold; font-size: 16px;"><?= number_format($item['price'], 0, ',', '.') ?>đ</span>
@@ -327,7 +334,7 @@ $(document).ready(function() {
 function addToCart(productId) {
     var variantId = $('input[name="product_variant"]:checked').val();
     if (!variantId) {
-        alert('Vui lòng chọn phân loại sản phẩm trước khi thêm vào giỏ!');
+        Swal.fire({ icon: 'warning', title: 'Thiếu phân loại', text: 'Vui lòng chọn phân loại sản phẩm trước khi thêm vào giỏ.' });
         return;
     }
     
@@ -347,19 +354,56 @@ function addToCart(productId) {
             try {
                 res = (typeof response === 'object') ? response : JSON.parse(response);
             } catch (e) {
-                alert("Đã xảy ra lỗi hệ thống khi xử lý giỏ hàng.");
+                Swal.fire({ icon: 'error', title: 'Lỗi hệ thống', text: 'Đã xảy ra lỗi hệ thống khi xử lý giỏ hàng.' });
                 return;
             }
 
             if (res.status === 'success') {
                 $('.cart-count').text(res.total_items);
-                alert('Sản phẩm đã được thêm vào giỏ hàng thành công!');
+                Swal.fire({ icon: 'success', title: 'Đã thêm vào giỏ', text: 'Sản phẩm đã được thêm vào giỏ hàng thành công!', timer: 1500, showConfirmButton: false });
             } else {
-                alert('Có lỗi xảy ra: ' + (res.message ? res.message : 'Vui lòng thử lại.'));
+                Swal.fire({ icon: 'error', title: 'Không thể thêm', text: 'Có lỗi xảy ra: ' + (res.message ? res.message : 'Vui lòng thử lại.') });
             }
         },
         error: function() {
-            alert('Không thể kết nối tới máy chủ!');
+            Swal.fire({ icon: 'error', title: 'Mất kết nối', text: 'Không thể kết nối tới máy chủ!' });
+        }
+    });
+}
+
+function buyNow(productId) {
+    var variantId = $('input[name="product_variant"]:checked').val();
+    if (!variantId) {
+        Swal.fire({ icon: 'warning', title: 'Thiếu phân loại', text: 'Vui lòng chọn phân loại sản phẩm trước khi mua.' });
+        return;
+    }
+    var quantity = parseInt($('#qty').val());
+
+    $.ajax({
+        url: '../backend/cart_process.php',
+        type: 'POST',
+        data: {
+            action: 'buy_now',
+            product_variant_id: variantId,
+            qty: quantity
+        },
+        success: function(response) {
+            let res;
+            try {
+                res = (typeof response === 'object') ? response : JSON.parse(response);
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'Lỗi hệ thống', text: 'Đã xảy ra lỗi hệ thống khi xử lý giỏ hàng.' });
+                return;
+            }
+
+            if (res.status === 'success') {
+                window.location.href = '/Cosmetics_shop/frontend/checkout.php';
+            } else {
+                Swal.fire({ icon: 'error', title: 'Không thể mua ngay', text: 'Có lỗi xảy ra: ' + (res.message ? res.message : 'Vui lòng thử lại.') });
+            }
+        },
+        error: function() {
+            Swal.fire({ icon: 'error', title: 'Mất kết nối', text: 'Không thể kết nối tới máy chủ!' });
         }
     });
 }

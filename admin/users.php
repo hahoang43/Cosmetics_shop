@@ -1,6 +1,7 @@
-<?php 
+<?php
 require_once '../config/database.php';
-require_once '../includes/admin_header.php'; 
+$conn = getDatabase();
+require_once '../includes/admin_header.php';
 
 // --- XỬ LÝ XÓA TÀI KHOẢN ---
 if (isset($_GET['delete_id'])) {
@@ -27,10 +28,20 @@ if (isset($_GET['delete_id'])) {
     }
 }
 
+// --- TÌM KIẾM KHÁCH HÀNG ---
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$search_param = [];
+$where_clause = 'WHERE role = 0 AND deleted = 0';
+
+if (!empty($search)) {
+    $where_clause .= " AND (fullname LIKE ? OR email LIKE ? OR phone_number LIKE ?)";
+    $search_param = ["%$search%", "%$search%", "%$search%"];
+}
+
 // --- LẤY DANH SÁCH KHÁCH HÀNG ---
 // Giả sử bảng User của bạn có các cột: id, fullname, email, phone_number, created_at
-$stmt = $conn->prepare("SELECT * FROM User ORDER BY id DESC");
-$stmt->execute();
+$stmt = $conn->prepare("SELECT * FROM User $where_clause ORDER BY id DESC");
+$stmt->execute($search_param);
 $users = $stmt->fetchAll();
 ?>
 
@@ -39,6 +50,23 @@ $users = $stmt->fetchAll();
     <span style="background: #2ecc71; color: #fff; padding: 5px 15px; border-radius: 20px; font-size: 14px;">
         Tổng thành viên: <strong><?= count($users) ?></strong>
     </span>
+</div>
+
+<!-- Search Box -->
+<div style="margin-bottom: 20px;">
+    <form method="GET" style="display: flex; gap: 10px; align-items: center;">
+        <label for="admin-users-search" style="position: absolute; left: -9999px;">Tìm kiếm khách hàng</label>
+        <input type="text" id="admin-users-search" name="search" placeholder="Tìm kiếm theo tên, email hoặc số điện thoại..." value="<?= htmlspecialchars($search) ?>"
+               style="flex: 1; padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+        <button type="submit" style="background: #2ecc71; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+            <i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm
+        </button>
+        <?php if(!empty($search)): ?>
+            <a href="users.php" style="background: #95a5a6; color: white; padding: 10px 20px; border-radius: 4px; text-decoration: none; font-weight: bold;">
+                <i class="fa-solid fa-xmark"></i> Xóa lọc
+            </a>
+        <?php endif; ?>
+    </form>
 </div>
 
 <div class="admin-table-container">

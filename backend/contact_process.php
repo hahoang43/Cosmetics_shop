@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+$conn = getDatabase();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // 1. Nhận dữ liệu từ form

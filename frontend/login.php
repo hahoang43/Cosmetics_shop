@@ -1,11 +1,10 @@
 <?php 
 
 include '../includes/header.php'; ?>
-<link rel="stylesheet" href="../assets/css/auth.css">
 <div class="auth-bg">
     <div class="container auth-container">
         <div class="auth-left">
-            <img src="../assets/images/logo.jpg" alt="Lumina Cosmetics" style="width: 100%;">
+            <img src="/Cosmetics_shop/assets/images/logo.png" alt="Lumina Cosmetics" style="width: 100%;">
             <p style="font-size: 1.2rem; margin-top: 20px; font-weight: 500; color: #555;">
                 Đánh thức vẻ đẹp tự nhiên của bạn cùng Lumina.
             </p>
@@ -66,8 +65,8 @@ include '../includes/header.php'; ?>
         </div>
     </div>
 </div>
-<script src="../assets/js/jquery-3.7.1.js"></script>
-<script src="../assets/js/login.js"></script>
+<script src="/Cosmetics_shop/assets/js/jquery-3.7.1.js"></script>
+<script src="/Cosmetics_shop/assets/js/login.js"></script>
 
 <?php 
 include '../includes/footer.php'; 

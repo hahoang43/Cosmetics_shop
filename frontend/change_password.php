@@ -1,5 +1,6 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/header.php'; 
 
 if (!isset($_SESSION['user'])) {
@@ -9,7 +10,7 @@ if (!isset($_SESSION['user'])) {
 
 $fullname = $_SESSION['user']['fullname'];
 ?>
-<link rel="stylesheet" href="../assets/css/profile.css">
+<link rel="stylesheet" href="/Cosmetics_shop/assets/css/profile.css">
 <div class="container">
     <div class="profile-container">
         
@@ -34,7 +35,7 @@ $fullname = $_SESSION['user']['fullname'];
             <h2>Đổi mật khẩu</h2>
             <p style="color: #777; margin-bottom: 30px;">Để bảo mật tài khoản, vui lòng không chia sẻ mật khẩu cho người khác</p>
 
-            <form action="../backend/change_password_process.php" method="POST">
+            <form action="/Cosmetics_shop/backend/change_password_process.php" method="POST">
                 <div class="form-info-group">
                     <label>Mật khẩu hiện tại</label>
                     <input type="password" name="old_password" required placeholder="Nhập mật khẩu cũ">

@@ -1,5 +1,6 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/header.php'; 
 
 // Chặn nếu chưa đăng nhập
@@ -43,9 +44,31 @@ $sql_details = "
 $stmt_details = $conn->prepare($sql_details);
 $stmt_details->execute([$order_id]);
 $details = $stmt_details->fetchAll();
+
+// Map sản phẩm -> review_id mà chính user này đã đánh giá để tạo link xem đúng vị trí.
+$reviewed_product_map = [];
+if (!empty($details)) {
+    $product_ids = [];
+    foreach ($details as $d) {
+        $product_ids[] = (int)$d['real_product_id'];
+    }
+    $product_ids = array_values(array_unique($product_ids));
+
+    if (!empty($product_ids)) {
+        $placeholders = implode(',', array_fill(0, count($product_ids), '?'));
+        $sql_reviewed = "SELECT product_id, MAX(id) AS review_id FROM Product_Review WHERE user_id = ? AND product_id IN ($placeholders) GROUP BY product_id";
+        $stmt_reviewed = $conn->prepare($sql_reviewed);
+        $stmt_reviewed->execute(array_merge([$user_id], $product_ids));
+        $reviewed_rows = $stmt_reviewed->fetchAll();
+
+        foreach ($reviewed_rows as $r) {
+            $reviewed_product_map[(int)$r['product_id']] = (int)$r['review_id'];
+        }
+    }
+}
 ?>
 
-<link rel="stylesheet" href="../assets/css/profile.css">
+<link rel="stylesheet" href="/Cosmetics_shop/assets/css/profile.css">
 <style>
     /* BỘ CSS THÀNH TIMELINE TIẾN TRÌNH ĐỘNG KIỂU SHOPEE */
     .order-timeline {
@@ -154,7 +177,7 @@ $details = $stmt_details->fetchAll();
 
         <main class="profile-main" style="flex: 1;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px;">
-                <h2 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 24px;">Chi tiết đơn hàng #<?= $order['id'] ?></h2>
+                <h2 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 24px;">Chi tiết đơn hàng #<?= htmlspecialchars(!empty($order['order_code']) ? $order['order_code'] : $order['id']) ?></h2>
                 <div style="display: flex; gap: 10px;">
                     <?php if ($can_return): ?>
                         <a href="order_return.php?id=<?= $order['id'] ?>" style="background: #e67e22; color: white; padding: 8px 14px; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 13px;">
@@ -257,7 +280,7 @@ $details = $stmt_details->fetchAll();
                         <tr>
                             <td style="padding: 15px 10px; border-bottom: 1px solid #eee;">
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <img src="../assets/uploads/products/<?= htmlspecialchars($item['thumbnail']) ?>" width="55" height="55" style="border-radius: 4px; border: 1px solid #eee; object-fit: cover;" onerror="this.src='https://via.placeholder.com/55';">
+                                    <img src="<?= htmlspecialchars(imageSrc($item['thumbnail'] ?? '', 'products')) ?>" width="55" height="55" style="border-radius: 4px; border: 1px solid #eee; object-fit: cover;" onerror="this.onerror=null;this.src='<?= htmlspecialchars(noImageSrc('No Image')) ?>';">
                                     <div>
                                         <strong style="display: block; color: #333; margin-bottom: 4px;"><?= htmlspecialchars($item['title']) ?></strong>
                                         <span style="font-size: 12px; color: #666; background: #f5f5f5; padding: 2px 6px; border-radius: 3px; border: 1px solid #e8e8e8;">
@@ -274,9 +297,17 @@ $details = $stmt_details->fetchAll();
                             </td>
                             <td style="padding: 15px; border-bottom: 1px solid #eee; text-align: right;">
                                 <?php if($order['status'] == 2): ?>
-                                    <a href="write_review.php?product_id=<?= $item['real_product_id'] ?>" style="display: inline-block; background: #333; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 500; transition: 0.3s;" onmouseover="this.style.background='#D4A373'" onmouseout="this.style.background='#333'">
-                                        <i class="fa-solid fa-pen-clip"></i> Viết đánh giá
-                                    </a>
+                                    <?php $review_id = $reviewed_product_map[(int)$item['real_product_id']] ?? 0; ?>
+                                    <?php $has_reviewed = $review_id > 0; ?>
+                                    <?php if ($has_reviewed): ?>
+                                        <a href="product_detail.php?id=<?= (int)$item['real_product_id'] ?>#review-id-<?= $review_id ?>" style="display: inline-block; background: #1f7a4c; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 500; transition: 0.3s;" onmouseover="this.style.background='#21935b'" onmouseout="this.style.background='#1f7a4c'">
+                                            <i class="fa-solid fa-eye"></i> Xem đánh giá
+                                        </a>
+                                    <?php else: ?>
+                                        <a href="write_review.php?product_id=<?= (int)$item['real_product_id'] ?>" style="display: inline-block; background: #333; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 12px; font-weight: 500; transition: 0.3s;" onmouseover="this.style.background='#D4A373'" onmouseout="this.style.background='#333'">
+                                            <i class="fa-solid fa-pen-clip"></i> Viết đánh giá
+                                        </a>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <span style="color:#aaa; font-size:12px; font-style: italic;">Chưa khả dụng</span>
                                 <?php endif; ?>

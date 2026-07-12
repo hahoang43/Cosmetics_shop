@@ -27,7 +27,7 @@ $(document).ready(function() {
         }
 
         $.ajax({
-            url: '../backend/auth_process.php',
+            url: '/Cosmetics_shop/backend/auth_process.php',
             type: 'POST',
             data: {
                 action: 'register',
@@ -49,7 +49,7 @@ $(document).ready(function() {
     $('#login-form').submit(function(e) {
         e.preventDefault();
         $.ajax({
-            url: '../backend/auth_process.php',
+            url: '/Cosmetics_shop/backend/auth_process.php',
             type: 'POST',
             data: {
                 action: 'login',
@@ -59,7 +59,7 @@ $(document).ready(function() {
             success: function(response) {
                 let res = JSON.parse(response);
                 if (res.status === 'success') {
-                    window.location.href = '../frontend/index.php'; // Chuyển về trang chủ
+                    window.location.href = '/Cosmetics_shop/frontend/index.php'; // Chuyển về trang chủ
                 } else {
                     alert(res.message);
                 }

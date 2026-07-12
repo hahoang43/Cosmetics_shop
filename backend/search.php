@@ -1,5 +1,7 @@
 <?php
 require_once '../config/database.php';
+require_once __DIR__ . '/../includes/image_helper.php';
+$conn = getDatabase();
 
 header('Content-Type: application/json');
 
@@ -17,9 +19,13 @@ if (isset($_GET['keyword'])) {
     $stmt = $conn->prepare("SELECT id, title, price, thumbnail FROM Product WHERE title LIKE ? AND deleted = 0 LIMIT 5");
     $stmt->execute([$search_term]);
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
+    foreach ($results as &$product) {
+        $product['thumbnail_src'] = imageSrc($product['thumbnail'] ?? '', 'products');
+    }
+    unset($product);
+
     echo json_encode($results);
 } else {
     echo json_encode([]);
 }
-?>

@@ -3,27 +3,36 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+require_once __DIR__ . '/image_helper.php';
 ?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>osmetics</title> 
+    <meta name="description" content="Lumina Cosmetics - Mỹ phẩm cao cấp">
+    <title>Lumina Cosmetics</title>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" as="style">
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preload" href="/Cosmetics_shop/assets/css/style.css?v=<?php echo time(); ?>" as="style">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="/Cosmetics_shop/assets/css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="/Cosmetics_shop/assets/css/auth.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="/Cosmetics_shop/assets/css/profile.css?v=<?php echo time(); ?>">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 </head>
 <body>
+    <?php include_once __DIR__ . '/chatbot.php'; ?>
     <header class="main-header">
         <div class="container header-top">
-            <div class="logo">
-                <a href="../frontend/index.php"><img src="../assets/images/logo.jpg"></a>
+                <div class="logo">
+                <a href="/Cosmetics_shop/frontend/index.php"><img src="/Cosmetics_shop/assets/images/logo.png" alt="Lumina Cosmetics"></a>
             </div>
             
             <div class="search-box" style="position: relative; width: 100%; max-width: 400px;">
-                <form action="search.php" method="GET" style="display: flex; width: 100%;">
+                <form action="/Cosmetics_shop/backend/search.php" method="GET" style="display: flex; width: 100%;">
                     <input type="text" name="keyword" id="live-search-input" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" required style="width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px 0 0 20px; outline: none;">
                     <button type="submit" style="padding: 10px 20px; background: #D4A373; color: white; border: none; border-radius: 0 20px 20px 0; cursor: pointer;">
                         <i class="fa-solid fa-magnifying-glass"></i>
@@ -45,9 +54,9 @@ if (session_status() === PHP_SESSION_NONE) {
                     
                     if (keyword.length >= 2) {
                         searchTimer = setTimeout(function() {
-                            $.ajax({
+                                $.ajax({
                                 // Mình đã trỏ URL về search_live.php như hướng dẫn tạo file backend nãy nhé
-                                url: '../backend/search.php', 
+                                url: '/Cosmetics_shop/backend/search.php', 
                                 type: 'GET',
                                 data: { keyword: keyword },
                                 dataType: 'json',
@@ -59,8 +68,8 @@ if (session_status() === PHP_SESSION_NONE) {
                                             
                                             dropdown.append(`
                                                 <li style="border-bottom: 1px solid #f0f0f0;">
-                                                    <a href="product_detail.php?id=${product.id}" style="display: flex; align-items: center; padding: 10px; text-decoration: none; color: #333; transition: background 0.2s;">
-                                                        <img src="../assets/uploads/products/${product.thumbnail}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px; border: 1px solid #eee;">
+                                                    <a href="/Cosmetics_shop/frontend/product_detail.php?id=${product.id}" style="display: flex; align-items: center; padding: 10px; text-decoration: none; color: #333; transition: background 0.2s;">
+                                                                <img src="${product.thumbnail_src || '/Cosmetics_shop/assets/images/no-image.png'}" alt="" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-right: 10px; border: 1px solid #eee;">
                                                         <div>
                                                             <div style="font-size: 14px; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">${product.title}</div>
                                                             <div style="color: #D4A373; font-weight: bold; font-size: 13px; margin-top: 3px;">${formattedPrice}</div>
@@ -71,7 +80,7 @@ if (session_status() === PHP_SESSION_NONE) {
                                         });
                                         dropdown.append(`
                                             <li>
-                                                <a href="search.php?keyword=${encodeURIComponent(keyword)}" style="display: block; text-align: center; padding: 10px; font-size: 13px; color: #D4A373; font-weight: bold; background: #fdfaf6; text-decoration: none;">
+                                                <a href="/Cosmetics_shop/frontend/search.php?keyword=${encodeURIComponent(keyword)}" style="display: block; text-align: center; padding: 10px; font-size: 13px; color: #D4A373; font-weight: bold; background: #fdfaf6; text-decoration: none;">
                                                     Xem tất cả kết quả cho "${keyword}" <i class="fa-solid fa-arrow-right"></i>
                                                 </a>
                                             </li>
@@ -104,19 +113,19 @@ if (session_status() === PHP_SESSION_NONE) {
             </script>
             
             <div class="header-icons">
-                <?php if (isset($_SESSION['user'])): ?>
+                    <?php if (isset($_SESSION['user'])): ?>
                     <span class="user-info">
                         Xin chào, 
-                        <a href="../frontend/profile.php" style="text-decoration: none; color: #D4A373;">
+                        <a href="/Cosmetics_shop/frontend/profile.php" style="text-decoration: none; color: #D4A373;">
                             <strong><?php echo htmlspecialchars($_SESSION['user']['fullname']); ?></strong>
                         </a> | 
-                        <a href="../frontend/logout.php" style="text-decoration: none; color: #555;">Đăng xuất</a>
+                        <a href="/Cosmetics_shop/frontend/logout.php" style="text-decoration: none; color: #555;">Đăng xuất</a>
                     </span>
                 <?php else: ?>
-                    <a href="../frontend/login.php" title="Tài khoản"><i class="fa-regular fa-user"></i></a>
+                    <a href="/Cosmetics_shop/frontend/login.php" title="Tài khoản"><i class="fa-regular fa-user"></i></a>
                 <?php endif; ?>
                 
-                <a href="../frontend/cart.php" title="Giỏ hàng" class="cart-icon">
+                <a href="/Cosmetics_shop/frontend/cart.php" title="Giỏ hàng" class="cart-icon">
                     <i class="fa-solid fa-cart-shopping"></i>
                     <?php 
                         $count = 0;
@@ -129,15 +138,75 @@ if (session_status() === PHP_SESSION_NONE) {
             </div>
         </div>
 
+        <?php
+            // Determine current page and category for active nav highlighting
+            $currentScript = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+            $currentCat = isset($_GET['category']) ? (int)$_GET['category'] : 0;
+            function navActive($scriptName, $currentScript, $catNeeded = null, $currentCat = 0) {
+                if ($currentScript !== $scriptName) return '';
+                // Special handling for products.php: only mark 'Cửa hàng' active when no category is selected
+                if ($scriptName === 'products.php') {
+                    if ($catNeeded === null) {
+                        return ($currentCat === 0) ? 'active' : '';
+                    }
+                    return ($currentCat === (int)$catNeeded) ? 'active' : '';
+                }
+                return 'active';
+            }
+        ?>
         <nav class="main-nav">
-            <div class="container">
-                <ul>
-                    <li><a href="../frontend/index.php">Trang chủ</a></li>
-                    <li><a href="../frontend/products.php">Cửa hàng</a></li>
-                    <li><a href="../frontend/products.php?category=1">Chăm sóc da</a></li>
-                    <li><a href="../frontend/products.php?category=2">Trang điểm</a></li>
-                    <li><a href="../frontend/contact.php">Liên hệ</a></li>
-                </ul>
-            </div>
-        </nav>
+                <div class="container">
+                    <ul>
+                        <li><a class="<?= navActive('index.php', $currentScript) ?>" href="/Cosmetics_shop/frontend/index.php">Trang chủ</a></li>
+                        <li><a class="<?= navActive('products.php', $currentScript) ?>" href="/Cosmetics_shop/frontend/products.php">Cửa hàng</a></li>
+                        <li><a class="<?= navActive('products.php', $currentScript, 1, $currentCat) ?>" href="/Cosmetics_shop/frontend/products.php?category=1">Chăm sóc da</a></li>
+                        <li><a class="<?= navActive('products.php', $currentScript, 2, $currentCat) ?>" href="/Cosmetics_shop/frontend/products.php?category=2">Trang điểm</a></li>
+                        <li><a class="<?= navActive('contact.php', $currentScript) ?>" href="/Cosmetics_shop/frontend/contact.php">Liên hệ</a></li>
+                    </ul>
+                </div>
+            </nav>
     </header>
+            <script>
+            (function(){
+                try {
+                    const header = document.querySelector('.main-header');
+                    if (header) {
+                        // ensure body has top padding equal to header height
+                        const setBodyPadding = () => {
+                            const h = header.getBoundingClientRect().height;
+                            document.body.style.paddingTop = h + 'px';
+                            document.body.style.setProperty('--header-offset', h + 'px');
+                        };
+                        setBodyPadding();
+                        window.addEventListener('resize', setBodyPadding);
+                    }
+
+                    // Active nav links: prefer exact category links when category param exists
+                    const url = new URL(window.location.href);
+                    const params = url.searchParams;
+                    const category = params.get('category');
+                    const navLinks = document.querySelectorAll('.main-nav a');
+                    navLinks.forEach(a => a.classList.remove('active'));
+
+                    if (url.pathname.endsWith('/products.php') || url.pathname.endsWith('products.php')) {
+                        if (category === null) {
+                            const shop = document.querySelector('.main-nav a[href$="/products.php"]');
+                            if (shop) shop.classList.add('active');
+                        } else {
+                            const catLink = document.querySelector('.main-nav a[href$="category=' + category + '"]');
+                            if (catLink) {
+                                catLink.classList.add('active');
+                            } else {
+                                // fallback: still highlight shop
+                                const shop = document.querySelector('.main-nav a[href$="/products.php"]');
+                                if (shop) shop.classList.add('active');
+                            }
+                        }
+                    } else {
+                        // highlight other pages by pathname
+                        const link = document.querySelector('.main-nav a[href$="' + url.pathname.split('/').pop() + '"]');
+                        if (link) link.classList.add('active');
+                    }
+                            } catch (e) { console.debug(e); }
+            })();
+            </script>

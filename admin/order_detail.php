@@ -1,5 +1,6 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/admin_header.php'; 
 
 // 1. Lấy ID đơn hàng từ URL
@@ -34,7 +35,7 @@ $order_details = $stmt_detail->fetchAll();
 ?>
 
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <h1 class="page-title" style="margin: 0; border: none;">Chi tiết Đơn hàng #<?= $order_id ?></h1>
+    <h1 class="page-title" style="margin: 0; border: none;">Chi tiết Đơn hàng #<?= htmlspecialchars(!empty($order['order_code']) ? $order['order_code'] : $order['id']) ?></h1>
     <a href="orders.php" style="background: #95a5a6; color: white; padding: 8px 15px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 14px;">
         <i class="fa-solid fa-arrow-left"></i> Quay lại danh sách
     </a>
@@ -79,7 +80,7 @@ $order_details = $stmt_detail->fetchAll();
                         <tr>
                             <td>
                                 <div style="display: flex; align-items: center; gap: 15px;">
-                                    <img src="../assets/uploads/products/<?= htmlspecialchars($item['thumbnail']) ?>" alt="img" width="60" style="border-radius: 5px; border: 1px solid #eee;">
+                                    <img src="<?= htmlspecialchars(imageSrc($item['thumbnail'] ?? '', 'products')) ?>" alt="img" width="60" style="border-radius: 5px; border: 1px solid #eee;">
                                     <div>
                                         <strong style="display: block; color: #333; margin-bottom: 5px;"><?= htmlspecialchars($item['title']) ?></strong>
                                         <span style="font-size: 12px; color: #777; background: #eee; padding: 3px 8px; border-radius: 4px;">

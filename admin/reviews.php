@@ -1,5 +1,6 @@
 <?php 
 require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/admin_header.php'; 
 
 // --- XỬ LÝ XÓA BÌNH LUẬN (SPAM) ---
@@ -70,9 +71,14 @@ $reviews = $stmt->fetchAll();
                         </td>
 
                         <td style="text-align: center;">
-                            <button type="button" class="btn-action" style="background: #e74c3c; color: white;" title="Xóa Spam" onclick="confirmDelete(<?= $row['id'] ?>)">
-                                <i class="fa-solid fa-trash-can"></i> Xóa
-                            </button>
+                            <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
+                                <a href="../frontend/product_detail.php?id=<?= (int)$row['product_id'] ?>#review-id-<?= (int)$row['id'] ?>" class="btn-action" style="background: #1f7a4c; color: white; text-decoration: none;" title="Xem đánh giá của khách hàng">
+                                    <i class="fa-solid fa-eye"></i> Xem
+                                </a>
+                                <button type="button" class="btn-action" style="background: #e74c3c; color: white;" title="Xóa Spam" onclick="confirmDelete(<?= (int)$row['id'] ?>)">
+                                    <i class="fa-solid fa-trash-can"></i> Xóa
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 <?php endforeach; ?>

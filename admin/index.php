@@ -1,6 +1,7 @@
 <?php 
 // Đảm bảo đã kết nối Database trước khi gọi truy vấn
-require_once '../config/database.php'; 
+require_once '../config/database.php';
+$conn = getDatabase();
 require_once '../includes/admin_header.php'; 
 
 // --- MỚI: XỬ LÝ BỘ LỌC NĂM ĐỘNG ---

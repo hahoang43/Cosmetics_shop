@@ -2,11 +2,13 @@
 /* Lớp nền mờ phía sau form */
 .auth-bg {
     background-color: #F9F6F0; /* Màu kem/be nhạt rất hợp với mỹ phẩm */
-    min-height: calc(100vh - 150px);
+    min-height: calc(100vh - 300px);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 50px 20px;
+    margin-top: 40px;
+    margin-bottom: 60px;
 }
 
 /* Khung chứa toàn bộ form */

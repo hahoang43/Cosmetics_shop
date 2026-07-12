@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../config/database.php';
+$conn = getDatabase();
 
 if (!isset($_SESSION['user']) || !isset($_GET['id'])) {
     header("Location: login.php");

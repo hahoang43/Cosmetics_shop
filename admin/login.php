@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../config/database.php';
+$conn = getDatabase();
 
 // Nếu người dùng đã đăng nhập từ trước rồi thì tự động chuyển hướng vào Dashboard
 if (isset($_SESSION['admin'])) {

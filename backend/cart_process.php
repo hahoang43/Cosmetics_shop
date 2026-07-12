@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../config/database.php';
+$conn = getDatabase();
 
 // Báo cho trình duyệt biết đây là dữ liệu JSON
 header('Content-Type: application/json');
@@ -11,6 +12,23 @@ $action = $_POST['action'] ?? '';
 // Cấu trúc $_SESSION['cart'] bây giờ sẽ là: [ product_variant_id => quantity ]
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
+}
+
+if (!isset($_SESSION['checkout_cart'])) {
+    $_SESSION['checkout_cart'] = [];
+}
+
+function buildCheckoutCartFromVariantIds(array $variantIds, array $cart): array {
+    $checkoutCart = [];
+
+    foreach ($variantIds as $variantId) {
+        $variantId = (int)$variantId;
+        if ($variantId > 0 && isset($cart[$variantId])) {
+            $checkoutCart[$variantId] = (int)$cart[$variantId];
+        }
+    }
+
+    return $checkoutCart;
 }
 
 // 1. XỬ LÝ THÊM VÀO GIỎ HÀNG (Từ trang Chi tiết sản phẩm)
@@ -53,6 +71,70 @@ if ($action == 'add') {
     $total_items = array_sum($_SESSION['cart']);
     
     echo json_encode(['status' => 'success', 'total_items' => $total_items]);
+    exit;
+}
+
+if ($action == 'buy_now') {
+    $variant_id = isset($_POST['product_variant_id']) ? (int)$_POST['product_variant_id'] : 0;
+    $qty = isset($_POST['qty']) ? (int)$_POST['qty'] : 1;
+
+    if ($variant_id <= 0 || $qty <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Dữ liệu không hợp lệ!']);
+        exit;
+    }
+
+    $stmt = $conn->prepare("SELECT quantity FROM Product_Variant WHERE id = ?");
+    $stmt->execute([$variant_id]);
+    $variant = $stmt->fetch();
+
+    if (!$variant) {
+        echo json_encode(['status' => 'error', 'message' => 'Phân loại sản phẩm không tồn tại!']);
+        exit;
+    }
+
+    if ($qty > $variant['quantity']) {
+        echo json_encode([
+            'status' => 'error',
+            'message' => 'Vượt quá số lượng tồn kho! (Kho chỉ còn ' . $variant['quantity'] . ' sản phẩm)'
+        ]);
+        exit;
+    }
+
+    $_SESSION['checkout_cart'] = [ $variant_id => $qty ];
+
+    echo json_encode(['status' => 'success']);
+    exit;
+}
+
+if ($action == 'prepare_checkout') {
+    $selectedIds = $_POST['selected_ids'] ?? [];
+
+    if (is_string($selectedIds)) {
+        $decoded = json_decode($selectedIds, true);
+        $selectedIds = is_array($decoded) ? $decoded : [];
+    }
+
+    if (!is_array($selectedIds) || empty($selectedIds)) {
+        echo json_encode(['status' => 'error', 'message' => 'Vui lòng chọn ít nhất một sản phẩm để thanh toán!']);
+        exit;
+    }
+
+    $checkoutCart = buildCheckoutCartFromVariantIds($selectedIds, $_SESSION['cart']);
+
+    if (empty($checkoutCart)) {
+        echo json_encode(['status' => 'error', 'message' => 'Không tìm thấy sản phẩm hợp lệ để thanh toán!']);
+        exit;
+    }
+
+    $_SESSION['checkout_cart'] = $checkoutCart;
+
+    echo json_encode(['status' => 'success', 'total_items' => array_sum($checkoutCart)]);
+    exit;
+}
+
+if ($action == 'clear_checkout') {
+    $_SESSION['checkout_cart'] = [];
+    echo json_encode(['status' => 'success']);
     exit;
 }
 

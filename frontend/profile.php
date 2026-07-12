@@ -1,10 +1,12 @@
 <?php 
 require_once '../config/database.php';
+require_once '../includes/popup_notify.php';
+$conn = getDatabase();
 require_once '../includes/header.php'; 
 
 // Kiểm tra nếu chưa đăng nhập thì đá về trang login
 if (!isset($_SESSION['user'])) {
-    echo "<script>window.location.href='login.php';</script>";
+    popup_warning('Cần đăng nhập', 'Vui lòng đăng nhập để xem hồ sơ cá nhân.', 'login.php');
     exit;
 }
 
@@ -15,7 +17,6 @@ $email = $user['email'] ?? '';
 $phone = $user['phone_number'] ?? '';
 $address = $user['address'] ?? '';
 ?>
-<link rel="stylesheet" href="../assets/css/profile.css">
 <div class="container">
     <div class="profile-container">
         
