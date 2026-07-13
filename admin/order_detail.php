@@ -7,7 +7,7 @@ require_once '../includes/admin_header.php';
 $order_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($order_id <= 0) {
-    echo "<script>alert('Mã đơn hàng không hợp lệ!'); window.location.href='orders.php';</script>";
+    echo "<script>Swal.fire({ icon: 'warning', title: 'Mã đơn hàng không hợp lệ', text: 'Mã đơn hàng không hợp lệ!' }).then(function() { window.location.href='orders.php'; });</script>";
     exit;
 }
 
@@ -17,7 +17,7 @@ $stmt_order->execute([$order_id]);
 $order = $stmt_order->fetch();
 
 if (!$order) {
-    echo "<script>alert('Không tìm thấy đơn hàng!'); window.location.href='orders.php';</script>";
+    echo "<script>Swal.fire({ icon: 'warning', title: 'Không tìm thấy đơn hàng', text: 'Không tìm thấy đơn hàng!' }).then(function() { window.location.href='orders.php'; });</script>";
     exit;
 }
 

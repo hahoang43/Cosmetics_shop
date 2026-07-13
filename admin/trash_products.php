@@ -193,7 +193,7 @@ $products = $stmt->fetchAll();
             <?php endforeach; ?>
             <input type="hidden" name="bulk_delete_permanent" value="1">
             <input type="hidden" name="force_delete" value="1">
-            <button type="submit" style="background:#b91c1c; color:white; border:none; padding:8px 12px; border-radius:6px; font-weight:bold;" onclick="return confirm('Xác nhận buộc xóa mọi dữ liệu liên quan? Hành động không thể khôi phục.')">Buộc xóa các sản phẩm bị khóa</button>
+            <button type="submit" style="background:#b91c1c; color:white; border:none; padding:8px 12px; border-radius:6px; font-weight:bold;" onclick="event.preventDefault(); confirmAdminAction('Xác nhận buộc xóa mọi dữ liệu liên quan? Hành động này không thể khôi phục.', function() { this.form.submit(); }.bind(this)); return false;">Buộc xóa các sản phẩm bị khóa</button>
         </form>
     </div>
 <?php endif; ?>
@@ -317,7 +317,7 @@ $products = $stmt->fetchAll();
         const checkedCount = checkboxes.filter(cb => cb.checked).length;
         if (checkedCount === 0) {
             e.preventDefault();
-            alert('Vui lòng chọn ít nhất một sản phẩm.');
+            Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng chọn ít nhất một sản phẩm.' });
             return;
         }
 
@@ -327,9 +327,10 @@ $products = $stmt->fetchAll();
             ? 'Bạn có chắc chắn muốn xóa vĩnh viễn ' + checkedCount + ' sản phẩm đã chọn?'
             : 'Bạn có chắc chắn muốn khôi phục ' + checkedCount + ' sản phẩm đã chọn?';
 
-        if (!confirm(message)) {
-            e.preventDefault();
-        }
+        e.preventDefault();
+        confirmAdminAction(message, function() {
+            form.submit();
+        });
     });
 
     updateState();
@@ -351,26 +352,29 @@ $products = $stmt->fetchAll();
                 const checked = Array.from(document.querySelectorAll('.trash-checkbox')).filter(cb=>cb.checked).length;
                 if (checked === 0) {
                     e.preventDefault();
-                    alert('Vui lòng chọn ít nhất một sản phẩm.');
+                    Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng chọn ít nhất một sản phẩm.' });
                     return;
                 }
-                if (!confirm('Bạn có chắc chắn muốn xóa vĩnh viễn ' + checked + ' sản phẩm đã chọn? Hành động không thể hoàn tác.')) {
-                    e.preventDefault();
-                }
+                e.preventDefault();
+                confirmAdminAction('Bạn có chắc chắn muốn xóa vĩnh viễn ' + checked + ' sản phẩm đã chọn? Hành động không thể hoàn tác.', function() {
+                    bulkForm.submit();
+                });
                 return;
             }
 
             // per-row delete button inside its own form
-            if (!confirm('Xóa vĩnh viễn sản phẩm này? Hành động không thể hoàn tác.')) {
-                e.preventDefault();
-            }
+            e.preventDefault();
+            confirmAdminAction('Xóa vĩnh viễn sản phẩm này? Hành động không thể hoàn tác.', function() {
+                btn.closest('form')?.submit();
+            });
         }
 
         // Restore confirmation
         if (btn.classList.contains('confirm-restore')) {
-            if (!confirm('Khôi phục sản phẩm này?')) {
-                e.preventDefault();
-            }
+            e.preventDefault();
+            confirmAdminAction('Khôi phục sản phẩm này?', function() {
+                btn.closest('form')?.submit();
+            });
         }
     });
 })();

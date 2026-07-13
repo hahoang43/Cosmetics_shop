@@ -23,13 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['banner_image'])) {
             if (move_uploaded_file($file_tmp, $upload_dir . $new_file_name)) {
                 $stmt = $conn->prepare("INSERT INTO Banner (image) VALUES (?)");
                 $stmt->execute([$new_file_name]);
-                echo "<script>alert('Thêm Banner thành công!'); window.location.href='banners.php';</script>";
+                echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Thêm Banner thành công!' }).then(function() { window.location.href='banners.php'; });</script>";
                 exit;
             } else {
-                echo "<script>alert('Lỗi: Không thể lưu file!');</script>";
+                echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: 'Không thể lưu file!' });</script>";
             }
         } else {
-            echo "<script>alert('Định dạng ảnh không hợp lệ!');</script>";
+            echo "<script>Swal.fire({ icon: 'warning', title: 'Định dạng ảnh không hợp lệ', text: 'Vui lòng chọn đúng định dạng ảnh.' });</script>";
         }
     }
 }
@@ -49,7 +49,7 @@ if (isset($_GET['delete_id'])) {
     // Xóa khỏi Database
     $stmt_del = $conn->prepare("DELETE FROM Banner WHERE id = ?");
     $stmt_del->execute([$del_id]);
-    echo "<script>alert('Đã xóa Banner!'); window.location.href='banners.php';</script>";
+    echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Đã xóa Banner!' }).then(function() { window.location.href='banners.php'; });</script>";
     exit;
 }
 
@@ -92,7 +92,7 @@ $banners = $stmt_banners->fetchAll();
                                 <img src="/Cosmetics_shop/assets/uploads/banners/<?= htmlspecialchars($b['image']) ?>" style="max-width: 300px; max-height: 120px; border-radius: 5px; border: 1px solid #ddd; object-fit: cover;" onerror="this.onerror=null;this.src='<?= htmlspecialchars(noImageSrc('No Image')) ?>';">
                             </td>
                             <td style="text-align: center; vertical-align: middle;">
-                                <button type="button" class="btn-action" style="background: #e74c3c; color: white;" onclick="if(confirm('Bạn có chắc muốn xóa Banner này?')) window.location.href='banners.php?delete_id=<?= $b['id'] ?>'">
+                                <button type="button" class="btn-action" style="background: #e74c3c; color: white;" onclick="confirmAdminAction('Bạn có chắc muốn xóa Banner này?', function() { window.location.href='banners.php?delete_id=<?= $b['id'] ?>'; }); return false;">
                                     <i class="fa-solid fa-trash-can"></i> Xóa
                                 </button>
                             </td>

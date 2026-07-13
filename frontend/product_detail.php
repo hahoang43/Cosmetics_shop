@@ -70,6 +70,27 @@ include '../includes/header.php';
 
 <?php echo popup_assets(); ?>
 
+<?php if (isset($_SESSION['flash_success'])): ?>
+    <script>
+        popup_notify('success', 'Thành công', <?= json_encode($_SESSION['flash_success'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>, {
+            showConfirmButton: false,
+            timer: 2200,
+            timerProgressBar: true
+        });
+    </script>
+    <?php unset($_SESSION['flash_success']); ?>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['flash_error'])): ?>
+    <script>
+        popup_notify('error', 'Lỗi', <?= json_encode($_SESSION['flash_error'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>, {
+            showConfirmButton: true,
+            timer: 0
+        });
+    </script>
+    <?php unset($_SESSION['flash_error']); ?>
+<?php endif; ?>
+
 <style>
     .variant-selection { margin-bottom: 25px; }
     .variant-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
@@ -195,7 +216,6 @@ include '../includes/header.php';
                     <?php foreach($list_qa as $qa): ?>
                         <div class="qa-item" style="border-bottom: 1px dashed #eee; padding-bottom: 20px;">
                             <div class="question" style="display: flex; gap: 10px; margin-bottom: 12px;">
-                                <div style="min-width: 28px; height: 28px; background: #eee; color: #555; text-align: center; line-height: 28px; border-radius: 50%; font-weight: bold; font-size: 13px;">Q</div>
                                 <div>
                                     <strong style="color: #333;"><?= htmlspecialchars($qa['fullname'] ?? 'Khách vãng lai') ?>:</strong> 
                                     <span style="color: #333;"><?= htmlspecialchars($qa['question']) ?></span>

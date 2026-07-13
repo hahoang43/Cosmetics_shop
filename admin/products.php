@@ -20,10 +20,10 @@ if (isset($_GET['delete_id'])) {
     try {
         $stmt_del = $conn->prepare("UPDATE Product SET deleted = 1 WHERE id = ?");
         $stmt_del->execute([$del_id]);
-        echo "<script>alert('Đã chuyển sản phẩm vào thùng rác!'); window.location.href='products.php';</script>";
+        echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Đã chuyển sản phẩm vào thùng rác!' }).then(function() { window.location.href='products.php'; });</script>";
         exit;
     } catch(PDOException $e) {
-        echo "<script>alert('Lỗi: " . addslashes($e->getMessage()) . "');</script>";
+        echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: '" . addslashes($e->getMessage()) . "' });</script>";
     }
 }
 
@@ -37,13 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_delete'])) {
             $placeholders = implode(',', array_fill(0, count($selectedIds), '?'));
             $stmt_del = $conn->prepare("UPDATE Product SET deleted = 1 WHERE id IN ($placeholders)");
             $stmt_del->execute($selectedIds);
-            echo "<script>alert('Đã chuyển " . count($selectedIds) . " sản phẩm vào thùng rác!'); window.location.href='products.php';</script>";
+            echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Đã chuyển " . count($selectedIds) . " sản phẩm vào thùng rác!' }).then(function() { window.location.href='products.php'; });</script>";
             exit;
         } catch(PDOException $e) {
-            echo "<script>alert('Lỗi: " . addslashes($e->getMessage()) . "');</script>";
+            echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: '" . addslashes($e->getMessage()) . "' });</script>";
         }
     } else {
-        echo "<script>alert('Vui lòng chọn ít nhất một sản phẩm để xóa.');</script>";
+        echo "<script>Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng chọn ít nhất một sản phẩm để xóa.' });</script>";
     }
 }
 
@@ -53,9 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_promote'])) {
     $discountPercent = isset($_POST['discount_percent']) ? max(0, min(100, (int)$_POST['discount_percent'])) : 0;
 
     if (empty($selectedIds)) {
-        echo "<script>alert('Vui lòng chọn ít nhất một sản phẩm để áp dụng khuyến mãi.');</script>";
+        echo "<script>Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng chọn ít nhất một sản phẩm để áp dụng khuyến mãi.' });</script>";
     } elseif ($discountPercent <= 0) {
-        echo "<script>alert('Vui lòng nhập % khuyến mãi lớn hơn 0.');</script>";
+        echo "<script>Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng nhập % khuyến mãi lớn hơn 0.' });</script>";
     } else {
         try {
             $stmtProduct = $conn->prepare("SELECT id, price, old_price FROM Product WHERE id = ? AND deleted = 0");
@@ -86,10 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bulk_promote'])) {
                 }
             }
 
-            echo "<script>alert('Đã áp dụng khuyến mãi {$discountPercent}% cho " . count($selectedIds) . " sản phẩm đã chọn.'); window.location.href='products.php';</script>";
+            echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Đã áp dụng khuyến mãi {$discountPercent}% cho " . count($selectedIds) . " sản phẩm đã chọn.' }).then(function() { window.location.href='products.php'; });</script>";
             exit;
         } catch(PDOException $e) {
-            echo "<script>alert('Lỗi: " . addslashes($e->getMessage()) . "');</script>";
+            echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: '" . addslashes($e->getMessage()) . "' });</script>";
         }
     }
 }
@@ -173,21 +173,24 @@ $products = $stmt->fetchAll();
     </form>
 </div>
 
-<div id="promotion-panel" style="background: #fffaf2; border: 1px solid #f1d0a2; padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
-    <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center;">
-        <div>
-            <div style="font-weight: bold; margin-bottom: 6px; color: #8a5a24;">Áp dụng khuyến mãi cho các sản phẩm đã chọn</div>
-            <div style="color: #8f6a42; font-size: 13px;">Chọn sản phẩm trong bảng bên dưới, nhập % khuyến mãi rồi bấm áp dụng.</div>
-        </div>
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <label for="bulk-discount-percent" style="font-size: 12px; font-weight: bold; color: #8a5a24;">% khuyến mãi</label>
-            <input type="number" id="bulk-discount-percent" name="discount_percent" form="bulk-delete-form" min="1" max="100" placeholder="% KM" style="width: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; outline: none;">
-            <button type="submit" form="bulk-delete-form" name="bulk_promote" value="1" style="background: #f39c12; color: white; border: none; padding: 10px 16px; border-radius: 5px; font-weight: bold; cursor: pointer;">
-                <i class="fa-solid fa-tag"></i> Áp dụng khuyến mãi
-            </button>
+<form method="POST" id="bulk-promote-form" style="margin-bottom: 20px;">
+    <div id="promotion-panel" style="background: #fffaf2; border: 1px solid #f1d0a2; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+        <div style="display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: center;">
+            <div>
+                <div style="font-weight: bold; margin-bottom: 6px; color: #8a5a24;">Áp dụng khuyến mãi cho các sản phẩm đã chọn</div>
+                <div style="color: #8f6a42; font-size: 13px;">Chọn sản phẩm trong bảng bên dưới, nhập % khuyến mãi rồi bấm áp dụng.</div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <label for="bulk-discount-percent" style="font-size: 12px; font-weight: bold; color: #8a5a24;">% khuyến mãi</label>
+                <input type="number" id="bulk-discount-percent" name="discount_percent" min="1" max="100" placeholder="% KM" style="width: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; outline: none;">
+                <button type="submit" name="bulk_promote" value="1" style="background: #f39c12; color: white; border: none; padding: 10px 16px; border-radius: 5px; font-weight: bold; cursor: pointer;">
+                    <i class="fa-solid fa-tag"></i> Áp dụng khuyến mãi
+                </button>
+            </div>
         </div>
     </div>
-</div>
+    <div id="bulk-promote-selected-inputs"></div>
+</form>
 
 <form method="POST" id="bulk-delete-form">
 <div class="admin-table-container">
@@ -285,9 +288,9 @@ $products = $stmt->fetchAll();
 
 <script>
 function confirmDelete(id) {
-    if(confirm('Bạn có chắc chắn muốn xóa sản phẩm này? Nó sẽ không hiển thị trên website nữa.')) {
+    confirmAdminAction('Bạn có chắc chắn muốn xóa sản phẩm này? Nó sẽ không hiển thị trên website nữa.', function() {
         window.location.href = 'products.php?delete_id=' + id;
-    }
+    });
 }
 
 (function() {
@@ -296,6 +299,9 @@ function confirmDelete(id) {
     const selectedCount = document.getElementById('selected-count');
     const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
     const bulkDeleteForm = document.getElementById('bulk-delete-form');
+    const bulkPromoteForm = document.getElementById('bulk-promote-form');
+    const bulkPromoteInputs = document.getElementById('bulk-promote-selected-inputs');
+    const bulkDiscountPercent = document.getElementById('bulk-discount-percent');
 
     function updateSelectionState() {
         const checkedCount = checkboxes.filter(cb => cb.checked).length;
@@ -320,13 +326,60 @@ function confirmDelete(id) {
         const checkedCount = checkboxes.filter(cb => cb.checked).length;
         if (checkedCount === 0) {
             e.preventDefault();
-            alert('Vui lòng chọn ít nhất một sản phẩm để xóa.');
+            Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng chọn ít nhất một sản phẩm để xóa.' });
             return;
         }
 
-        if (!confirm('Bạn có chắc chắn muốn xóa ' + checkedCount + ' sản phẩm đã chọn?')) {
+        e.preventDefault();
+        confirmAdminAction('Bạn có chắc chắn muốn xóa ' + checkedCount + ' sản phẩm đã chọn?', function() {
+            bulkDeleteForm.submit();
+        });
+    });
+
+    bulkPromoteForm?.addEventListener('submit', function(e) {
+        const checkedIds = checkboxes.filter(cb => cb.checked).map(cb => cb.value);
+        const discountPercent = parseInt(bulkDiscountPercent?.value || '0', 10);
+
+        if (checkedIds.length === 0) {
             e.preventDefault();
+            Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng chọn ít nhất một sản phẩm để áp dụng khuyến mãi.' });
+            return;
         }
+
+        if (!discountPercent || discountPercent <= 0) {
+            e.preventDefault();
+            Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng nhập % khuyến mãi lớn hơn 0.' });
+            return;
+        }
+
+        e.preventDefault();
+        bulkPromoteInputs.innerHTML = '';
+        
+        // Thêm các ID sản phẩm được chọn
+        checkedIds.forEach(function(id) {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'selected_ids[]';
+            hidden.value = id;
+            bulkPromoteInputs.appendChild(hidden);
+        });
+
+        // Thêm % giảm giá[cite: 1]
+        const discountHidden = document.createElement('input');
+        discountHidden.type = 'hidden';
+        discountHidden.name = 'discount_percent';
+        discountHidden.value = String(discountPercent);
+        bulkPromoteInputs.appendChild(discountHidden);
+
+        // THÊM ĐOẠN MÃ NÀY: Bổ sung input để PHP nhận diện được hành động bulk_promote
+        const actionHidden = document.createElement('input');
+        actionHidden.type = 'hidden';
+        actionHidden.name = 'bulk_promote';
+        actionHidden.value = '1';
+        bulkPromoteInputs.appendChild(actionHidden);
+
+        // Gửi form[cite: 1]
+        bulkPromoteForm.submit();
     });
 
     updateSelectionState();

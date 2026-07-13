@@ -42,12 +42,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_status'])) {
             }
 
             $conn->commit();
-            echo "<script>alert('Cập nhật trạng thái đơn hàng #$order_id thành công!'); window.location.href='orders.php';</script>";
+            echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Cập nhật trạng thái đơn hàng #$order_id thành công!' }).then(function() { window.location.href='orders.php'; });</script>";
             exit;
         }
     } catch(Exception $e) {
         if ($conn->inTransaction()) { $conn->rollBack(); }
-        echo "<script>alert('Lỗi cập nhật: " . addslashes($e->getMessage()) . "');</script>";
+        echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi cập nhật', text: '" . addslashes($e->getMessage()) . "' });</script>";
     }
 }
 

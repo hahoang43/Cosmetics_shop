@@ -21,6 +21,47 @@ $currentAdminPage = basename($_SERVER['PHP_SELF']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lumina - Quản trị hệ thống</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        window.showAdminAlert = function(options) {
+            if (window.Swal) {
+                return Swal.fire(options);
+            }
+
+            const fallbackMessage = options.text || options.title || 'Thông báo';
+            window.alert(fallbackMessage);
+            return Promise.resolve({ isConfirmed: true });
+        };
+
+        window.showAdminRedirectAlert = function(options, redirectUrl) {
+            return window.showAdminAlert(options).then(function() {
+                if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                }
+            });
+        };
+
+        window.confirmAdminAction = function(message, onConfirm) {
+            if (window.Swal) {
+                return Swal.fire({
+                    icon: 'question',
+                    title: 'Xác nhận',
+                    text: message,
+                    showCancelButton: true,
+                    confirmButtonText: 'Đồng ý',
+                    cancelButtonText: 'Hủy'
+                }).then(function(result) {
+                    if (result.isConfirmed && typeof onConfirm === 'function') {
+                        onConfirm();
+                    }
+                });
+            }
+
+            if (window.confirm(message) && typeof onConfirm === 'function') {
+                onConfirm();
+            }
+        };
+    </script>
     <link rel="stylesheet" href="/Cosmetics_shop/assets/css/admin.css">
 </head>
 <body>

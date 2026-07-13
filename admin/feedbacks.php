@@ -15,7 +15,7 @@ if (isset($_GET['read_id'])) {
 if (isset($_GET['delete_id'])) {
     $del_id = (int)$_GET['delete_id'];
     $conn->prepare("DELETE FROM FeedBack WHERE id = ?")->execute([$del_id]);
-    echo "<script>alert('Đã xóa phản hồi!'); window.location.href='feedbacks.php';</script>";
+    echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Đã xóa phản hồi!' }).then(function() { window.location.href='feedbacks.php'; });</script>";
     exit;
 }
 
@@ -94,9 +94,9 @@ $feedbacks = $stmt->fetchAll();
 
 <script>
 function confirmDelete(id) {
-    if(confirm('Bạn có chắc chắn muốn xóa tin nhắn này?')) {
+    confirmAdminAction('Bạn có chắc chắn muốn xóa tin nhắn này?', function() {
         window.location.href = 'feedbacks.php?delete_id=' + id;
-    }
+    });
 }
 </script>
 

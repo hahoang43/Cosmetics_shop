@@ -32,7 +32,7 @@ require_once __DIR__ . '/image_helper.php';
             </div>
             
             <div class="search-box" style="position: relative; width: 100%; max-width: 400px;">
-                <form action="/Cosmetics_shop/backend/search.php" method="GET" style="display: flex; width: 100%;">
+                <form action="/Cosmetics_shop/frontend/search.php" method="GET" style="display: flex; width: 100%;">
                     <input type="text" name="keyword" id="live-search-input" placeholder="Tìm kiếm sản phẩm..." autocomplete="off" required style="width: 100%; padding: 10px 15px; border: 1px solid #ddd; border-radius: 20px 0 0 20px; outline: none;">
                     <button type="submit" style="padding: 10px 20px; background: #D4A373; color: white; border: none; border-radius: 0 20px 20px 0; cursor: pointer;">
                         <i class="fa-solid fa-magnifying-glass"></i>

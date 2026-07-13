@@ -14,16 +14,16 @@ if (isset($_GET['delete_id'])) {
     
     if ($count > 0) {
         // Nếu đã có đơn hàng thì không được xóa để giữ lại lịch sử đối soát
-        echo "<script>alert('KHÔNG THỂ XÓA! Khách hàng này đã có lịch sử mua $count đơn hàng trên hệ thống.'); window.location.href='users.php';</script>";
+        echo "<script>Swal.fire({ icon: 'warning', title: 'Không thể xóa', text: 'KHÔNG THỂ XÓA! Khách hàng này đã có lịch sử mua $count đơn hàng trên hệ thống.' }).then(function() { window.location.href='users.php'; });</script>";
         exit;
     } else {
         try {
             $stmt_del = $conn->prepare("DELETE FROM User WHERE id = ?");
             $stmt_del->execute([$del_id]);
-            echo "<script>alert('Đã xóa tài khoản khách hàng thành công!'); window.location.href='users.php';</script>";
+            echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Đã xóa tài khoản khách hàng thành công!' }).then(function() { window.location.href='users.php'; });</script>";
             exit;
         } catch(PDOException $e) {
-            echo "<script>alert('Lỗi: " . addslashes($e->getMessage()) . "');</script>";
+            echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: '" . addslashes($e->getMessage()) . "' });</script>";
         }
     }
 }
@@ -118,9 +118,9 @@ $users = $stmt->fetchAll();
 
 <script>
 function confirmDelete(id, name) {
-    if(confirm('Bạn có chắc chắn muốn xóa tài khoản của khách hàng "' + name + '" không? Hành động này không thể hoàn tác!')) {
+    confirmAdminAction('Bạn có chắc chắn muốn xóa tài khoản của khách hàng "' + name + '" không? Hành động này không thể hoàn tác!', function() {
         window.location.href = 'users.php?delete_id=' + id;
-    }
+    });
 }
 </script>
 

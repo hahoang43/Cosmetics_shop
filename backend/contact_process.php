@@ -35,17 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         ]);
 
         // 4. Thông báo thành công
-        echo "<script>
-            alert('Cảm ơn " . htmlspecialchars($firstname) . "! Phản hồi của bạn đã được gửi thành công.');
-            window.location.href = '../frontend/contact.php';
-        </script>";
+        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+        echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: " . json_encode('Cảm ơn ' . $firstname . '! Phản hồi của bạn đã được gửi thành công.') . " }).then(function() { window.location.href = '../frontend/contact.php'; });</script>";
 
     } catch (PDOException $e) {
         // Báo lỗi nếu có vấn đề về Database
-        echo "<script>
-            alert('Lỗi: " . addslashes($e->getMessage()) . "');
-            window.history.back();
-        </script>";
+        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+        echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: '" . addslashes($e->getMessage()) . "' }).then(function() { window.history.back(); });</script>";
     }
 }
 ?>

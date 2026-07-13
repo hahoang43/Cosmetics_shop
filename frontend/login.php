@@ -66,6 +66,7 @@ include '../includes/header.php'; ?>
     </div>
 </div>
 <script src="/Cosmetics_shop/assets/js/jquery-3.7.1.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/Cosmetics_shop/assets/js/login.js"></script>
 
 <?php 

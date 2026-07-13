@@ -1,23 +1,31 @@
 <?php
 // Lấy danh sách danh mục từ DB để hiển thị
-$stmt_cat = $conn->query("SELECT * FROM Category");
+$stmt_cat = $conn->query("SELECT * FROM Category ORDER BY name ASC");
 $categories = $stmt_cat->fetchAll();
 
-// Lấy category_id hiện tại từ URL để highlight
-$current_cat = isset($_GET['category']) ? (int)$_GET['category'] : 0;
-$current_price = isset($_GET['price_range']) ? $_GET['price_range'] : '';
-$current_min_price = isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0;
-$current_max_price = isset($_GET['max_price']) ? (int)$_GET['max_price'] : 0;
+$current_page = basename(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+$current_path = '/Cosmetics_shop/frontend/' . $current_page;
 
-// Define group keywords to highlight matching categories when grouped category selected
-$groupKeywords = [
-    1 => ['chăm sóc da', 'skin care', 'skincare', 'bodycare'],
-    2 => ['trang điểm', 'makeup'],
-];
-$current_group = null;
-if (in_array($current_cat, [1,2])) {
-    $current_group = $current_cat;
+$selected_categories = [];
+if (isset($_GET['categories'])) {
+    if (is_array($_GET['categories'])) {
+        $selected_categories = array_values(array_filter(array_map('intval', $_GET['categories'])));
+    } elseif ((int)$_GET['categories'] > 0) {
+        $selected_categories = [(int)$_GET['categories']];
+    }
 }
+
+// Giữ tương thích với các URL cũ dùng category đơn lẻ ở menu trên
+$current_cat = isset($_GET['category']) ? (int)$_GET['category'] : 0;
+if (empty($selected_categories) && $current_cat > 0 && !in_array($current_cat, [1, 2], true)) {
+    $selected_categories = [$current_cat];
+}
+
+$current_min_price = isset($_GET['min_price']) ? max(0, (int)$_GET['min_price']) : 0;
+$current_max_price = isset($_GET['max_price']) ? min(100000000, (int)$_GET['max_price']) : 0;
+
+$clear_params = $_GET;
+unset($clear_params['categories'], $clear_params['category'], $clear_params['price_range'], $clear_params['min_price'], $clear_params['max_price'], $clear_params['page']);
 ?>
 
 <button type="button" class="sidebar-filter-toggle" id="sidebar-filter-toggle" aria-controls="sidebar-filter-panel" aria-expanded="false" title="Mở bộ lọc" aria-label="Mở bộ lọc">
@@ -30,59 +38,37 @@ if (in_array($current_cat, [1,2])) {
 <aside class="sidebar-filter" id="sidebar-filter-panel" aria-hidden="true">
     <div class="filter-group">
         <h4>Danh mục sản phẩm</h4>
-        <ul>
-            <li>
-                <a href="/Cosmetics_shop/frontend/products.php" class="<?= $current_cat == 0 ? 'active' : '' ?>">Tất cả sản phẩm</a>
-            </li>
-            <?php foreach ($categories as $cat): ?>
-                <li>
-                          <?php
-                              $isActive = $current_cat == $cat['id'];
-                              if ($current_group !== null && !$isActive) {
-                                  $keywords = $groupKeywords[$current_group] ?? [];
-                                  $lname = mb_strtolower($cat['name'], 'UTF-8');
-                                  foreach ($keywords as $kw) {
-                                      if (mb_stripos($lname, $kw) !== false) {
-                                          $isActive = true;
-                                          break;
-                                      }
-                                  }
-                              }
-                          ?>
-                                                    <a href="/Cosmetics_shop/frontend/products.php?category=<?= $cat['id'] ?>" class="<?= $isActive ? 'active' : '' ?>" aria-label="<?= htmlspecialchars($cat['name']) ?>">
-                                                        <span><?= htmlspecialchars($cat['name']) ?></span>
-                        </a>
-                </li>
+        <a class="filter-clear-link <?= empty($selected_categories) ? 'active' : '' ?>" href="<?= $current_path . (!empty($clear_params) ? '?' . http_build_query($clear_params) : '') ?>">Tất cả sản phẩm</a>
+
+        <form class="filter-form" action="<?= $current_path ?>" method="GET">
+            <?php foreach ($clear_params as $paramKey => $paramValue): ?>
+                <?php if (is_array($paramValue)): ?>
+                    <?php foreach ($paramValue as $arrayValue): ?>
+                        <input type="hidden" name="<?= htmlspecialchars($paramKey) ?>[]" value="<?= htmlspecialchars($arrayValue) ?>">
+                    <?php endforeach; ?>
+                <?php elseif ($paramValue !== null && $paramValue !== ''): ?>
+                    <input type="hidden" name="<?= htmlspecialchars($paramKey) ?>" value="<?= htmlspecialchars($paramValue) ?>">
+                <?php endif; ?>
             <?php endforeach; ?>
-        </ul>
-    </div>
 
-    <div class="filter-group">
-        <h4>Khoảng giá</h4>
-        <ul>
-            <li><a href="/Cosmetics_shop/frontend/products.php?<?= http_build_query(array_merge($_GET, ['price_range' => 'under-300', 'min_price' => null, 'max_price' => null])) ?>" class="<?= $current_price == 'under-300' ? 'active' : '' ?>">Dưới 300.000đ</a></li>
-            <li><a href="/Cosmetics_shop/frontend/products.php?<?= http_build_query(array_merge($_GET, ['price_range' => '300-700', 'min_price' => null, 'max_price' => null])) ?>" class="<?= $current_price == '300-700' ? 'active' : '' ?>">300.000đ - 700.000đ</a></li>
-            <li><a href="/Cosmetics_shop/frontend/products.php?<?= http_build_query(array_merge($_GET, ['price_range' => '700-1500', 'min_price' => null, 'max_price' => null])) ?>" class="<?= $current_price == '700-1500' ? 'active' : '' ?>">700.000đ - 1.500.000đ</a></li>
-            <li><a href="/Cosmetics_shop/frontend/products.php?<?= http_build_query(array_merge($_GET, ['price_range' => 'over-1500', 'min_price' => null, 'max_price' => null])) ?>" class="<?= $current_price == 'over-1500' ? 'active' : '' ?>">Trên 1.500.000đ</a></li>
-        </ul>
-
-        <form class="price-custom-form" action="/Cosmetics_shop/frontend/products.php" method="GET">
-            <?php if ($current_cat > 0): ?>
-                <input type="hidden" name="category" value="<?= $current_cat ?>">
-            <?php endif; ?>
-            <?php if (!empty($_GET['search'])): ?>
-                <input type="hidden" name="search" value="<?= htmlspecialchars($_GET['search']) ?>">
-            <?php endif; ?>
-            <?php if (!empty($_GET['sort'])): ?>
-                <input type="hidden" name="sort" value="<?= htmlspecialchars($_GET['sort']) ?>">
-            <?php endif; ?>
-
-            <div class="price-custom-title">Tự chọn khoảng giá</div>
-            <div class="price-custom-row">
-                <input type="number" name="min_price" min="0" step="1000" placeholder="Từ" value="<?= $current_min_price > 0 ? $current_min_price : '' ?>">
-                <input type="number" name="max_price" min="0" step="1000" placeholder="Đến" value="<?= $current_max_price > 0 ? $current_max_price : '' ?>">
+            <div class="filter-checkbox-list">
+                <?php foreach ($categories as $cat): ?>
+                    <?php $isChecked = in_array((int)$cat['id'], $selected_categories, true); ?>
+                    <label class="filter-checkbox-item">
+                        <input type="checkbox" name="categories[]" value="<?= (int)$cat['id'] ?>" <?= $isChecked ? 'checked' : '' ?>>
+                        <span><?= htmlspecialchars($cat['name']) ?></span>
+                    </label>
+                <?php endforeach; ?>
             </div>
-            <button type="submit" class="price-custom-submit">Áp dụng</button>
+
+            <div class="price-custom-form">
+                <div class="price-custom-title">Khoảng giá</div>
+                <div class="price-custom-row">
+                    <input type="number" name="min_price" min="0" max="100000000" step="1000" placeholder="Từ 0" value="<?= $current_min_price > 0 ? $current_min_price : '' ?>">
+                    <input type="number" name="max_price" min="0" max="100000000" step="1000" placeholder="Đến 100.000.000" value="<?= $current_max_price > 0 ? $current_max_price : '' ?>">
+                </div>
+                <button type="submit" class="price-custom-submit">Áp dụng</button>
+            </div>
         </form>
     </div>
 </aside>

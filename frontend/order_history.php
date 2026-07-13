@@ -218,15 +218,15 @@ $orders = $stmt->fetchAll();
                                     
                                     <td style="padding: 15px; border-bottom: 1px solid #eee; text-align: center; vertical-align: top;">
                                         <div style="display: flex; flex-direction: column; gap: 8px; align-items: center;">
-                                            <a href="order_detail_user.php?id=<?= $row['id'] ?>" style="color: #3498db; text-decoration: none; font-weight: 500; font-size: 13.5px;">
-                                                <i class="fa-solid fa-eye"></i> Chi tiết
+                                            <a href="order_detail_user.php?id=<?= $row['id'] ?>" style="color: #3498db; text-decoration: none; font-weight: 600; font-size: 13.5px; padding: 6px 0; display: inline-block;">
+                                                Chi tiết
                                             </a>
                                             
                                             <?php if ($row['status'] == 0): ?>
                                                 <a href="cancel_order.php?id=<?= $row['id'] ?>" 
-                                                    onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?')" 
-                                                    style="color: #e74c3c; font-size: 12.5px; text-decoration: none; font-weight: 500;">
-                                                    <i class="fa-solid fa-xmark"></i> Hủy đơn
+                                                    onclick="return confirmCancelOrder(event, 'cancel_order.php?id=<?= $row['id'] ?>')" 
+                                                    style="color: #e74c3c; font-size: 12.5px; text-decoration: none; font-weight: 600; padding: 6px 0; display: inline-block;">
+                                                    Hủy đơn
                                                 </a>
                                             <?php endif; ?>
                                         </div>
@@ -265,6 +265,27 @@ $(document).ready(function() {
         }
     });
 });
+
+function confirmCancelOrder(event, url) {
+    event.preventDefault();
+
+    Swal.fire({
+        icon: 'question',
+        title: 'Hủy đơn hàng',
+        text: 'Bạn có chắc muốn hủy đơn hàng này?',
+        showCancelButton: true,
+        confirmButtonText: 'Hủy đơn',
+        cancelButtonText: 'Không',
+        confirmButtonColor: '#e74c3c',
+        cancelButtonColor: '#95a5a6'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            window.location.href = url;
+        }
+    });
+
+    return false;
+}
 </script>
 
 <?php if (isset($_SESSION['flash_success'])): ?>

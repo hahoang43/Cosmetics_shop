@@ -13,13 +13,24 @@ function ensureProductDiscountPercentColumn(PDO $conn): void {
 
 ensureProductDiscountPercentColumn($conn);
 
+// Hàm tạo thêm cột quantity nếu chưa có (dành cho tồn kho của sản phẩm không có phân loại)
+function ensureProductQuantityColumn(PDO $conn): void {
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'Product' AND COLUMN_NAME = 'quantity'");
+    $stmt->execute();
+    if ((int)$stmt->fetchColumn() === 0) {
+        $conn->exec("ALTER TABLE Product ADD COLUMN quantity INT NOT NULL DEFAULT 0 AFTER discount_percent");
+    }
+}
+
+ensureProductQuantityColumn($conn);
+
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-if ($id <= 0) { echo "<script>alert('Mã sản phẩm không hợp lệ!'); window.location.href='products.php';</script>"; exit; }
+if ($id <= 0) { echo "<script>Swal.fire({ icon: 'warning', title: 'Mã sản phẩm không hợp lệ', text: 'Mã sản phẩm không hợp lệ!' }).then(function() { window.location.href='products.php'; });</script>"; exit; }
 
 $stmt_prod = $conn->prepare("SELECT * FROM Product WHERE id = ? AND deleted = 0");
 $stmt_prod->execute([$id]);
 $product = $stmt_prod->fetch();
-if (!$product) { echo "<script>alert('Không tìm thấy sản phẩm!'); window.location.href='products.php';</script>"; exit; }
+if (!$product) { echo "<script>Swal.fire({ icon: 'warning', title: 'Không tìm thấy sản phẩm', text: 'Không tìm thấy sản phẩm!' }).then(function() { window.location.href='products.php'; });</script>"; exit; }
 
 $base_price = (float)(($product['old_price'] > $product['price'] && $product['old_price'] > 0) ? $product['old_price'] : $product['price']);
 $discount_percent = isset($product['discount_percent']) ? (int)$product['discount_percent'] : 0;
@@ -73,6 +84,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $category_id = (int)$_POST['category_id'];
     $base_price = (float)$_POST['price'];
     $discount_percent = isset($_POST['discount_percent']) ? max(0, min(100, (int)$_POST['discount_percent'])) : 0;
+    
+    // Lấy số lượng từ form (mặc định là 0 nếu không có)
+    $quantity = isset($_POST['quantity']) ? max(0, (int)$_POST['quantity']) : 0;
+    
     $price = $discount_percent > 0 ? (float) round($base_price * (100 - $discount_percent) / 100) : $base_price;
     $old_price = $discount_percent > 0 ? $base_price : 0;
     $description = trim($_POST['description']);
@@ -91,9 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             $conn->beginTransaction();
 
-            $sql = "UPDATE Product SET category_id=?, title=?, price=?, old_price=?, thumbnail=?, description=?, brand=?, discount_percent=? WHERE id=?";
+            // SỬA: Thêm cột quantity=? vào SQL
+            $sql = "UPDATE Product SET category_id=?, title=?, price=?, old_price=?, thumbnail=?, description=?, brand=?, discount_percent=?, quantity=? WHERE id=?";
             $stmt_update = $conn->prepare($sql);
-            $stmt_update->execute([$category_id, $title, $price, $old_price, $thumbnail, $description, $brand, $discount_percent, $id]);
+            
+            // SỬA: Thêm biến $quantity vào execute
+            $stmt_update->execute([$category_id, $title, $price, $old_price, $thumbnail, $description, $brand, $discount_percent, $quantity, $id]);
 
             $pv_ids = $_POST['pv_ids'] ?? []; 
             $variant_names = $_POST['variant_names'] ?? []; 
@@ -199,11 +217,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
 
             $conn->commit();
-            echo "<script>alert('Cập nhật thành công!'); window.location.href='products.php';</script>";
+            echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Cập nhật thành công!' }).then(function() { window.location.href='products.php'; });</script>";
             exit;
         } catch(Exception $e) {
             $conn->rollBack();
-            echo "<script>alert('Lỗi: " . addslashes($e->getMessage()) . "');</script>";
+            echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: '" . addslashes($e->getMessage()) . "' });</script>";
         }
     }
 }
@@ -223,14 +241,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div><label style="font-weight: bold;">Thương hiệu</label><input type="text" name="brand" value="<?= htmlspecialchars($product['brand']) ?>" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;"></div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+        <!-- SỬA: Đổi grid-template-columns từ 3 cột thành 4 cột, Thêm cột Tồn kho -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
             <div><label style="font-weight: bold;">Danh mục *</label>
                 <select name="category_id" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;">
                     <?php foreach($categories as $cat): ?><option value="<?= $cat['id'] ?>" <?= ($cat['id'] == $product['category_id']) ? 'selected' : '' ?>><?= htmlspecialchars($cat['name']) ?></option><?php endforeach; ?>
                 </select>
             </div>
-            <div><label style="font-weight: bold;">Giá gốc (VNĐ) *</label><input type="number" name="price" id="base-price" value="<?= (int)$base_price ?>" required min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;"></div>
+            <div><label style="font-weight: bold;">Giá gốc</label><input type="number" name="price" id="base-price" value="<?= (int)$base_price ?>" required min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;"></div>
             <div><label style="font-weight: bold;">Khuyến mãi (%)</label><input type="number" name="discount_percent" id="discount-percent" value="<?= (int)$discount_percent ?>" min="0" max="100" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;"></div>
+            <div>
+                <label style="font-weight: bold;">Tồn kho</label>
+                <input type="number" name="quantity" value="<?= isset($product['quantity']) ? (int)$product['quantity'] : 0 ?>" required min="0" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin-top:5px;">
+            </div>
         </div>
 
         <div style="margin-bottom: 20px; background: #fdfaf6; border: 1px dashed #e7c9a4; padding: 14px 16px; border-radius: 6px; color: #7a4f2e;">
@@ -241,15 +264,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <datalist id="variant_list">
             <?php foreach($all_variants as $v): ?><option value="<?= htmlspecialchars($v['name']) ?>"><?php endforeach; ?></option></datalist>
 
-        <h3 style="margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">2. Phân loại hàng (Màu sắc / Dung tích)</h3>
+        <h3 style="margin-top: 30px; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px;">2. Phân loại hàng (không bắt buộc)</h3>
         <table style="width: 100%; margin-bottom: 10px; border-collapse: collapse;" id="variant-table">
             <thead>
                 <tr style="background: #f9f9f9;">
-                    <th style="padding: 10px; border: 1px solid #ddd;">Chọn hoặc Gõ tên Phân loại</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Giá bán riêng</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Giá cũ riêng</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Tên sản phẩm</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Giá gốc</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Giá khuyến mãi</th>
                     <th style="padding: 10px; border: 1px solid #ddd;">Tồn kho</th>
-                    <th style="padding: 10px; border: 1px solid #ddd;">Hình ảnh màu riêng</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Hình ảnh</th>
                     <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Xóa</th>
                 </tr>
             </thead>
@@ -259,11 +282,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <td style="padding: 10px; border: 1px solid #ddd;">
                             <input type="hidden" name="pv_ids[]" value="<?= $pv['id'] ?>">
                             <input type="hidden" name="existing_var_imgs[]" value="<?= htmlspecialchars($pv['thumbnail'] ?? '') ?>">
-                            <input type="text" name="variant_names[]" list="variant_list" value="<?= htmlspecialchars($pv['variant_name']) ?>" required autocomplete="off" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;">
+                            <input type="text" name="variant_names[]" list="variant_list" value="<?= htmlspecialchars($pv['variant_name']) ?>" autocomplete="off" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;">
                         </td>
-                        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_prices[]" value="<?= $pv['price'] ?>" required min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
-                        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_old_prices[]" value="<?= $pv['old_price'] ?>" min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
-                        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_qtys[]" value="<?= $pv['quantity'] ?>" required min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_prices[]" value="<?= (int)(($pv['old_price'] > $pv['price'] && $pv['old_price'] > 0) ? $pv['old_price'] : $pv['price']) ?>" min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_old_prices[]" value="<?= (int)(($pv['old_price'] > $pv['price'] && $pv['old_price'] > 0) ? $pv['price'] : 0) ?>" min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_qtys[]" value="<?= $pv['quantity'] ?>" min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
                         <td style="padding: 10px; border: 1px solid #ddd;">
                             <div style="display:flex; align-items:center; gap:8px;">
                                     <?php if(!empty($pv['thumbnail'])): ?>
@@ -298,7 +321,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <?php foreach ($gallery_images as $img): ?>
                         <div style="position: relative; width: 100px; border: 1px solid #ddd; padding: 5px; border-radius: 4px; background: #fff;">
                             <img src="/Cosmetics_shop/assets/uploads/products/<?= htmlspecialchars($img['thumbnail']) ?>" style="width: 100%; height: 80px; object-fit: cover; border-radius: 3px;">
-                            <a href="product_edit.php?id=<?= $id ?>&delete_gal_id=<?= $img['id'] ?>" onclick="return confirm('Xóa ảnh mô tả này?')" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; width: 20px; height: 20px; border-radius: 50%; text-align: center; line-height: 18px; text-decoration: none; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">x</a>
+                            <a href="#" onclick="confirmAdminAction('Xóa ảnh mô tả này?', function() { window.location.href='product_edit.php?id=<?= $id ?>&delete_gal_id=<?= $img['id'] ?>'; }); return false;" style="position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; width: 20px; height: 20px; border-radius: 50%; text-align: center; line-height: 18px; text-decoration: none; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">x</a>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
@@ -315,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
 
         <button type="submit" style="background: #3498db; color: white; border: none; padding: 12px 30px; font-weight: bold; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%;">
-            CẬP NHẬT SẢN PHẨM & KHO
+            CẬP NHẬT SẢN PHẨM
         </button>
     </form>
 </div>
@@ -328,11 +351,11 @@ document.getElementById('btn-add-variant').addEventListener('click', function() 
         <td style="padding: 10px; border: 1px solid #ddd;">
             <input type="hidden" name="pv_ids[]" value="0">
             <input type="hidden" name="existing_var_imgs[]" value="">
-            <input type="text" name="variant_names[]" list="variant_list" required placeholder="VD: Đỏ Cherry hoặc 150ml" autocomplete="off" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;">
+            <input type="text" name="variant_names[]" list="variant_list" placeholder="VD: Đỏ Cherry hoặc 150ml" autocomplete="off" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;">
         </td>
-        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_prices[]" required min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
-        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_old_prices[]" value="0" min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
-        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_qtys[]" required min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
+        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_prices[]" min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
+        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_old_prices[]" min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
+        <td style="padding: 10px; border: 1px solid #ddd;"><input type="number" name="var_qtys[]" min="0" style="width:100%; padding:8px; border: 1px solid #ddd; border-radius: 4px;"></td>
         <td style="padding: 10px; border: 1px solid #ddd;"><input type="file" name="var_thumbnails[]" accept="image/*" style="width:100%; padding:5px;"></td>
         <td style="padding: 10px; border: 1px solid #ddd; text-align: center;"><button type="button" class="btn-remove-row" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Xóa</button></td>
     `;

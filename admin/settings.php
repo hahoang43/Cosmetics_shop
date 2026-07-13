@@ -215,7 +215,7 @@ $shipping_max_fee = isset($settings['shipping_max_fee']) ? intval($settings['shi
 
     function ensureLeafletReady() {
         if (typeof window.L === 'undefined') {
-            alert('Không tải được thư viện bản đồ Leaflet.');
+            Swal.fire({ icon: 'error', title: 'Lỗi bản đồ', text: 'Không tải được thư viện bản đồ Leaflet.' });
             return false;
         }
 
@@ -373,14 +373,14 @@ $shipping_max_fee = isset($settings['shipping_max_fee']) ? intval($settings['shi
 
     currentLocationButton.addEventListener('click', function() {
         if (!navigator.geolocation) {
-            alert('Trình duyệt không hỗ trợ định vị vị trí.');
+            Swal.fire({ icon: 'warning', title: 'Không hỗ trợ', text: 'Trình duyệt không hỗ trợ định vị vị trí.' });
             return;
         }
 
         navigator.geolocation.getCurrentPosition(function(position) {
             setShopLocation(position.coords.latitude, position.coords.longitude);
         }, function() {
-            alert('Không thể lấy vị trí hiện tại. Vui lòng cho phép truy cập vị trí.');
+            Swal.fire({ icon: 'error', title: 'Không lấy được vị trí', text: 'Không thể lấy vị trí hiện tại. Vui lòng cho phép truy cập vị trí.' });
         });
     });
 

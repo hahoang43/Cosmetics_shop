@@ -50,6 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
             $_SESSION['user'] = [
                 'id' => $user['id'],
                 'fullname' => $user['fullname'],
+                'email' => $user['email'],
+                'phone_number' => $user['phone_number'] ?? '',
+                'address' => $user['address'] ?? '',
                 'role_id' => $user['role_id']
             ];
             echo json_encode(['status' => 'success', 'message' => 'Đăng nhập thành công!']);

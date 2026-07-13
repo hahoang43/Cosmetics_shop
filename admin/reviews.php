@@ -9,10 +9,10 @@ if (isset($_GET['delete_id'])) {
     try {
         $stmt_del = $conn->prepare("DELETE FROM Product_Review WHERE id = ?");
         $stmt_del->execute([$del_id]);
-        echo "<script>alert('Đã xóa bình luận thành công!'); window.location.href='reviews.php';</script>";
+        echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Đã xóa bình luận thành công!' }).then(function() { window.location.href='reviews.php'; });</script>";
         exit;
     } catch(PDOException $e) {
-        echo "<script>alert('Lỗi: " . addslashes($e->getMessage()) . "');</script>";
+        echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: '" . addslashes($e->getMessage()) . "' });</script>";
     }
 }
 
@@ -95,9 +95,9 @@ $reviews = $stmt->fetchAll();
 
 <script>
 function confirmDelete(id) {
-    if(confirm('Bạn có chắc chắn muốn xóa bình luận này không?')) {
+    confirmAdminAction('Bạn có chắc chắn muốn xóa bình luận này không?', function() {
         window.location.href = 'reviews.php?delete_id=' + id;
-    }
+    });
 }
 </script>
 

@@ -17,11 +17,19 @@ $params = [];
 
 // --- 3. LẤY THÔNG SỐ LỌC & TÌM KIẾM ---
 $category_id = isset($_GET['category']) ? (int)$_GET['category'] : 0;
+$selected_categories = [];
+if (isset($_GET['categories'])) {
+    if (is_array($_GET['categories'])) {
+        $selected_categories = array_values(array_filter(array_map('intval', $_GET['categories'])));
+    } elseif ((int)$_GET['categories'] > 0) {
+        $selected_categories = [(int)$_GET['categories']];
+    }
+}
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 $sort = isset($_GET['sort']) ? $_GET['sort'] : 'latest';
 $price_range = isset($_GET['price_range']) ? $_GET['price_range'] : '';
-$min_price = isset($_GET['min_price']) ? (int)$_GET['min_price'] : 0;
-$max_price = isset($_GET['max_price']) ? (int)$_GET['max_price'] : 0;
+$min_price = isset($_GET['min_price']) ? max(0, (int)$_GET['min_price']) : 0;
+$max_price = isset($_GET['max_price']) ? min(100000000, (int)$_GET['max_price']) : 0;
 
 $selectedCategoryTitle = 'Tất cả sản phẩm';
 if ($category_id > 0) {
@@ -33,8 +41,14 @@ if ($category_id > 0) {
     }
 }
 
-// Lọc theo Danh mục
-if ($category_id > 0) {
+// Lọc theo Danh mục (checkbox đa chọn)
+if (!empty($selected_categories)) {
+    $inPlace = implode(',', array_fill(0, count($selected_categories), '?'));
+    $whereClause .= " AND category_id IN ($inPlace)";
+    foreach ($selected_categories as $cid) {
+        $params[] = (int)$cid;
+    }
+} elseif ($category_id > 0) {
     // Map logical category ids to groups by name keywords.
     // 1 => chăm sóc da (skin care / bodycare), 2 => trang điểm (makeup)
     $categoryGroups = [
@@ -129,6 +143,11 @@ $products = $stmt->fetchAll();
             
             <form action="" method="GET">
                 <?php if ($category_id > 0) { echo '<input type="hidden" name="category" value="'.$category_id.'">'; } ?>
+                <?php if (!empty($selected_categories)): ?>
+                    <?php foreach ($selected_categories as $selectedCategory): ?>
+                        <input type="hidden" name="categories[]" value="<?= (int)$selectedCategory ?>">
+                    <?php endforeach; ?>
+                <?php endif; ?>
                 <?php if (!empty($search)) { echo '<input type="hidden" name="search" value="'.htmlspecialchars($search).'">'; } ?>
                 <?php if (!empty($price_range)) { echo '<input type="hidden" name="price_range" value="'.htmlspecialchars($price_range).'">'; } ?>
                 <?php if ($min_price > 0) { echo '<input type="hidden" name="min_price" value="'.$min_price.'">'; } ?>

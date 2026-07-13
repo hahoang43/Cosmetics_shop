@@ -59,7 +59,9 @@ main.contact-page {
     padding: 15px 0;
 }
 
-.logo img { height: 60px; }
+.logo img {
+    height: 60px;
+}
 
 .search-bar {
     display: flex;
@@ -98,7 +100,7 @@ main.contact-page {
     width: 100%;
     z-index: 1100;
     background: var(--white);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
 .main-nav ul {
@@ -131,7 +133,8 @@ main.contact-page {
     gap: 15px;
 }
 
-.header-icons > a, .cart-icon {
+.header-icons>a,
+.cart-icon {
     position: relative;
     display: flex;
     align-items: center;
@@ -146,7 +149,8 @@ main.contact-page {
     transition: all 0.3s ease;
 }
 
-.header-icons > a:hover, .cart-icon:hover {
+.header-icons>a:hover,
+.cart-icon:hover {
     color: #D4A373;
     background-color: #F9F6F0;
     transform: translateY(-2px);
@@ -161,7 +165,9 @@ main.contact-page {
     margin-right: 10px;
 }
 
-.user-info strong { color: #D4A373; }
+.user-info strong {
+    color: #D4A373;
+}
 
 .user-info a {
     color: #888888;
@@ -173,7 +179,9 @@ main.contact-page {
     padding-left: 8px;
 }
 
-.user-info a:hover { color: #d9534f; }
+.user-info a:hover {
+    color: #d9534f;
+}
 
 .cart-count {
     position: absolute;
@@ -190,7 +198,7 @@ main.contact-page {
     justify-content: center;
     border-radius: 50%;
     border: 2px solid #ffffff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* ==========================================
@@ -201,8 +209,10 @@ main.contact-page {
     text-align: center;
     overflow: hidden;
     margin-bottom: 40px;
-    min-height: 450px; /* Thêm dòng này: Ép chiều cao tối thiểu để không bị sập khung */
-    background-color: #f9f6f0; /* Thêm dòng này: Màu nền dự phòng cho đỡ trống */
+    min-height: 450px;
+    /* Thêm dòng này: Ép chiều cao tối thiểu để không bị sập khung */
+    background-color: #f9f6f0;
+    /* Thêm dòng này: Màu nền dự phòng cho đỡ trống */
 }
 
 .hero-banner img {
@@ -217,7 +227,7 @@ main.contact-page {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(255,255,255,0.85);
+    background: rgba(255, 255, 255, 0.85);
     padding: 40px;
     border-radius: 8px;
 }
@@ -246,7 +256,9 @@ main.contact-page {
     transition: 0.3s !important;
 }
 
-.btn-shop:hover { background: #c2905f; }
+.btn-shop:hover {
+    background: #c2905f;
+}
 
 /* ==========================================
    LƯỚI SẢN PHẨM & CARD SẢN PHẨM (CHUẨN)
@@ -285,7 +297,7 @@ main.contact-page {
 
 .product-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
 }
 
 /* Thêm !important để ép trình duyệt không tô màu tím cho link */
@@ -333,18 +345,32 @@ main.contact-page {
     font-weight: bold;
     z-index: 2;
 }
-.sale-badge { background: #e74c3c; }
-.new-badge { background: #2ecc71; }
+
+.sale-badge {
+    background: #e74c3c;
+}
+
+.new-badge {
+    background: #2ecc71;
+}
 
 /* Giá tiền */
-.price { margin: 10px 0 15px; }
-.price-label { font-size: 13px; color: #999; }
+.price {
+    margin: 10px 0 15px;
+}
+
+.price-label {
+    font-size: 13px;
+    color: #999;
+}
+
 .old-price {
     text-decoration: line-through;
     color: #999;
     margin: 0 5px;
     font-size: 13px;
 }
+
 .current-price {
     color: var(--primary);
     font-weight: bold;
@@ -374,7 +400,10 @@ main.contact-page {
     border-color: var(--primary);
     color: #fff;
 }
-.btn-add-cart-grid i { margin-right: 5px; }
+
+.btn-add-cart-grid i {
+    margin-right: 5px;
+}
 
 /* ==========================================
    TRANG DANH SÁCH (SHOP) & BỘ LỌC
@@ -481,12 +510,13 @@ main.contact-page {
     padding: 20px;
     border-radius: 10px;
     border: 1px solid #eee;
-    height: auto; /* size to content */
+    height: auto;
+    /* size to content */
     max-height: calc(100vh - 160px);
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
     opacity: 0;
     visibility: hidden;
     transform: translateX(-10px);
@@ -554,7 +584,10 @@ main.contact-page {
     border-radius: 3px;
 }
 
-.filter-group { margin-bottom: 25px; }
+.filter-group {
+    margin-bottom: 25px;
+}
+
 .filter-group h4 {
     font-family: 'Playfair Display', serif;
     border-bottom: 1px solid #D4A373;
@@ -562,8 +595,16 @@ main.contact-page {
     margin-bottom: 15px;
     color: #333;
 }
-.filter-group ul { list-style: none; padding: 0; }
-.filter-group ul li { margin-bottom: 10px; }
+
+.filter-group ul {
+    list-style: none;
+    padding: 0;
+}
+
+.filter-group ul li {
+    margin-bottom: 10px;
+}
+
 .filter-group ul li a {
     text-decoration: none;
     color: #666;
@@ -571,11 +612,60 @@ main.contact-page {
     transition: all 0.3s;
     display: block;
 }
+
 .filter-group ul li a:hover,
 .filter-group ul li a.active {
     color: #D4A373;
     padding-left: 5px;
     font-weight: 600;
+}
+
+.filter-clear-link {
+    display: inline-block;
+    margin-bottom: 12px;
+    color: #666;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.filter-clear-link.active {
+    color: #D4A373;
+    font-weight: 700;
+}
+
+.filter-form {
+    margin-top: 10px;
+}
+
+.filter-checkbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.filter-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+.filter-checkbox-item input {
+    width: 16px;
+    height: 16px;
+    accent-color: #D4A373;
+    flex: 0 0 auto;
+}
+
+.filter-checkbox-item span {
+    flex: 1;
 }
 
 .price-custom-form {
@@ -609,7 +699,7 @@ main.contact-page {
 
 .price-custom-row input:focus {
     border-color: #D4A373;
-    box-shadow: 0 0 0 2px rgba(212,163,115,0.12);
+    box-shadow: 0 0 0 2px rgba(212, 163, 115, 0.12);
 }
 
 .price-custom-submit {
@@ -674,6 +764,7 @@ main.contact-page {
     border-bottom: 1px solid #eee;
     margin-top: 50px;
 }
+
 .tab-btn {
     background: none;
     border: none;
@@ -682,21 +773,27 @@ main.contact-page {
     font-weight: 600;
     color: #888;
 }
+
 .tab-btn.active {
     color: var(--primary);
     border-bottom: 2px solid var(--primary);
 }
+
 .tab-content {
     display: none;
     padding: 20px 0;
     line-height: 1.8;
 }
-.tab-content.active { display: block; }
+
+.tab-content.active {
+    display: block;
+}
 
 /* ==========================================
    TRANG GIỎ HÀNG (CART)
 ========================================== */
-.cart-table th, .cart-table td {
+.cart-table th,
+.cart-table td {
     border-bottom: 1px solid #eee;
     padding: 15px;
     text-align: left;
@@ -712,11 +809,13 @@ main.contact-page {
     align-items: start;
     margin-top: 30px;
 }
+
 .order-review h3 {
     font-family: 'Playfair Display', serif;
     font-size: 20px;
     margin-bottom: 20px;
 }
+
 .quantity-selector {
     display: flex;
     align-items: center;
@@ -727,6 +826,7 @@ main.contact-page {
     overflow: hidden;
     margin-top: 5px;
 }
+
 .qty-btn {
     width: 30px;
     height: 30px;
@@ -734,6 +834,7 @@ main.contact-page {
     background: #f9f9f9;
     cursor: pointer;
 }
+
 .total-row {
     display: flex;
     justify-content: space-between;
@@ -742,6 +843,7 @@ main.contact-page {
     padding-top: 15px;
     border-top: 2px solid #333;
 }
+
 .btn-order {
     width: 100%;
     background-color: var(--primary);
@@ -755,7 +857,10 @@ main.contact-page {
     margin-top: 25px;
     transition: 0.3s;
 }
-.btn-order:hover { background-color: #c2905f; }
+
+.btn-order:hover {
+    background-color: #c2905f;
+}
 
 /* ==========================================
    TRANG LIÊN HỆ & BÊN DƯỚI
@@ -767,6 +872,7 @@ main.contact-page {
     align-items: start;
     margin: 50px 0;
 }
+
 .info-item {
     display: flex;
     align-items: center;
@@ -776,8 +882,14 @@ main.contact-page {
     border-radius: 8px;
     margin-bottom: 15px;
 }
-.info-item i { color: var(--primary); font-size: 24px; }
-.contact-form-box input, .contact-form-box textarea {
+
+.info-item i {
+    color: var(--primary);
+    font-size: 24px;
+}
+
+.contact-form-box input,
+.contact-form-box textarea {
     width: 100%;
     padding: 12px 15px;
     margin-bottom: 15px;
@@ -785,6 +897,7 @@ main.contact-page {
     border-radius: 5px;
     outline: none;
 }
+
 .btn-auth-submit {
     width: 100%;
     background-color: var(--primary);
@@ -796,7 +909,10 @@ main.contact-page {
     cursor: pointer;
     text-transform: uppercase;
 }
-.btn-auth-submit:hover { background-color: #c2905f; }
+
+.btn-auth-submit:hover {
+    background-color: #c2905f;
+}
 
 .main-footer {
     background: #222;
@@ -804,32 +920,70 @@ main.contact-page {
     padding: 40px 0 20px;
     margin-top: 60px;
 }
+
 .footer-grid {
     display: grid;
     grid-template-columns: 1.4fr 1fr 1fr;
     gap: 36px;
     margin-bottom: 28px;
 }
+
 .footer-bottom {
     text-align: center;
     border-top: 1px solid #444;
     padding-top: 20px;
     font-size: 14px;
 }
+
 /* Footer small refinements */
-.main-footer a { color: #f2f2f2; text-decoration: none; }
-.main-footer a:hover { color: var(--primary); }
-.main-footer .footer-info h3 { color: #fff; margin-bottom: 8px; }
-.main-footer .footer-links h4, .main-footer .footer-contact h4 { color: #fff; margin-bottom: 10px; font-size: 15px; }
-.main-footer .socials a { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:6px; background: rgba(255,255,255,0.03); color:#fff; }
-.main-footer .socials a:hover { background: rgba(255,255,255,0.06); color: var(--primary); }
+.main-footer a {
+    color: #f2f2f2;
+    text-decoration: none;
+}
+
+.main-footer a:hover {
+    color: var(--primary);
+}
+
+.main-footer .footer-info h3 {
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.main-footer .footer-links h4,
+.main-footer .footer-contact h4 {
+    color: #fff;
+    margin-bottom: 10px;
+    font-size: 15px;
+}
+
+.main-footer .socials a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #fff;
+}
+
+.main-footer .socials a:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--primary);
+}
 
 /* ==========================================
    RESPONSIVE (ĐIỆN THOẠI & TABLET)
 ========================================== */
 @media (max-width: 992px) {
-    .checkout-form { grid-template-columns: 1fr; }
-    .contact-grid { grid-template-columns: 1fr; }
+    .checkout-form {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 768px) {
@@ -895,7 +1049,10 @@ main.contact-page {
         font-size: 13px;
     }
 
-    .shop-container { display: block; }
+    .shop-container {
+        display: block;
+    }
+
     .sidebar-filter {
         left: 12px;
         right: 12px;
@@ -909,8 +1066,14 @@ main.contact-page {
         left: 12px;
         bottom: 12px;
     }
-    .footer-grid { grid-template-columns: 1fr; }
-    .product-main { grid-template-columns: 1fr; }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-main {
+        grid-template-columns: 1fr;
+    }
 }
 
 @media (max-width: 420px) {
@@ -929,6 +1092,7 @@ main.contact-page {
         gap: 10px;
     }
 }
+
 /* ==========================================
    CSS CHO BANNER SLIDER
 ========================================== */
@@ -936,17 +1100,21 @@ main.contact-page {
     position: relative;
     width: 100%;
 }
+
 .mySlides {
     display: none;
     width: 100%;
 }
+
 .mySlides img {
     width: 100%;
     object-fit: cover;
     height: 450px;
 }
+
 /* Mũi tên chuyển slide */
-.prev, .next {
+.prev,
+.next {
     cursor: pointer;
     position: absolute;
     top: 50%;
@@ -959,27 +1127,39 @@ main.contact-page {
     transition: 0.3s;
     border-radius: 0 5px 5px 0;
     user-select: none;
-    background-color: rgba(0,0,0,0.2);
+    background-color: rgba(0, 0, 0, 0.2);
 }
+
 .next {
     right: 0;
     border-radius: 5px 0 0 5px;
 }
+
 .prev {
     left: 0;
 }
-.prev:hover, .next:hover {
-    background-color: rgba(0,0,0,0.8);
+
+.prev:hover,
+.next:hover {
+    background-color: rgba(0, 0, 0, 0.8);
 }
+
 /* Hiệu ứng mờ dần (Fade) */
 .fade {
     animation-name: fadeAnim;
     animation-duration: 1.5s;
 }
+
 @keyframes fadeAnim {
-    from {opacity: .4} 
-    to {opacity: 1}
+    from {
+        opacity: .4
+    }
+
+    to {
+        opacity: 1
+    }
 }
+
 /* ==========================================
    BỔ SUNG CSS CHI TIẾT PHƯƠNG THỨC THANH TOÁN
 ========================================== */
@@ -1013,7 +1193,7 @@ main.contact-page {
 .payment-item:has(input:checked) {
     background-color: #fffaf5;
     border-color: #D4A373;
-    box-shadow: 0 2px 8px rgba(212,163,115,0.1);
+    box-shadow: 0 2px 8px rgba(212, 163, 115, 0.1);
 }
 
 .payment-content {

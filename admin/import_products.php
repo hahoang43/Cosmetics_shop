@@ -288,7 +288,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file']) && is_up
         <p style="margin:0 0 12px; color:#7c2d12; font-size:14px; line-height:1.5;">
             Xóa toàn bộ sản phẩm dataset chưa phát sinh đơn hàng cùng review, QA, gallery và dữ liệu liên quan. Các sản phẩm đã có trong đơn hàng sẽ được giữ lại để không lỗi khóa ngoại.
         </p>
-        <button type="submit" name="delete_dataset" value="1" style="padding:10px 14px; background:#d9480f; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn dataset không? Hành động này không thể hoàn tác.')">
+        <button type="submit" name="delete_dataset" value="1" style="padding:10px 14px; background:#d9480f; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="event.preventDefault(); confirmAdminAction('Bạn có chắc chắn muốn xóa vĩnh viễn dataset không? Hành động này không thể hoàn tác.', function() { this.form.submit(); }.bind(this)); return false;">
             <i class="fa-solid fa-trash-can"></i> Xóa dataset vĩnh viễn
         </button>
     </form>

@@ -51,6 +51,19 @@ if (!isset($_SESSION['user'])) {
 $checkout_cart = !empty($_SESSION['checkout_cart']) ? $_SESSION['checkout_cart'] : [];
 $source_cart = !empty($checkout_cart) ? $checkout_cart : ($_SESSION['cart'] ?? []);
 
+if (isset($_SESSION['user']) && (empty($_SESSION['user']['address']) || empty($_SESSION['user']['phone_number']))) {
+    $stmt_user = $conn->prepare("SELECT fullname, email, phone_number, address FROM User WHERE id = ? LIMIT 1");
+    $stmt_user->execute([(int)$_SESSION['user']['id']]);
+    $userRow = $stmt_user->fetch(PDO::FETCH_ASSOC);
+
+    if ($userRow) {
+        $_SESSION['user']['fullname'] = $userRow['fullname'] ?? ($_SESSION['user']['fullname'] ?? '');
+        $_SESSION['user']['email'] = $userRow['email'] ?? ($_SESSION['user']['email'] ?? '');
+        $_SESSION['user']['phone_number'] = $userRow['phone_number'] ?? ($_SESSION['user']['phone_number'] ?? '');
+        $_SESSION['user']['address'] = $userRow['address'] ?? '';
+    }
+}
+
 if (empty($source_cart)) {
     popup_warning('Giỏ hàng trống', 'Giỏ hàng của bạn đang trống!', 'index.php');
     exit;
@@ -298,6 +311,15 @@ $(document).ready(function() {
         return Number(value).toLocaleString('vi-VN') + 'đ';
     }
 
+    function persistCustomerAddress(addressText) {
+        const normalizedAddress = (addressText || '').trim();
+        if (normalizedAddress.length < 3) {
+            return;
+        }
+
+        $.post('../backend/save_customer_address.php', { address: normalizedAddress });
+    }
+
     function collectOrderData() {
         const mapAddress = $('#map-address').val().trim();
         return {
@@ -413,10 +435,12 @@ $(document).ready(function() {
         return $.post('../backend/shipping_quote.php', { lat, lng });
     }
 
-    function setMarker(lat, lng) {
-        // Ensure modal map is initialized
+    function setMarker(lat, lng, shouldOpenModal = true) {
+        // Ensure modal map is initialized only when the user explicitly opens the map
         if (modalMap === null) {
-            $('#map-modal').css('display', 'flex');
+            if (shouldOpenModal) {
+                $('#map-modal').css('display', 'flex');
+            }
             initMapModal();
         }
         
@@ -435,6 +459,7 @@ $(document).ready(function() {
                 $('#map-address').val(displayAddress);
                 $('#map-address-preview').text('Địa chỉ từ bản đồ: ' + displayAddress);
                 $('#address-search').val(displayAddress);
+                persistCustomerAddress(displayAddress);
             })
             .catch(() => {
                 $('#map-address').val('Đã chọn vị trí trên bản đồ');
@@ -483,6 +508,25 @@ $(document).ready(function() {
         marker = L.marker([shopLocation.lat, shopLocation.lng]).addTo(modalMap);
     }
 
+    function initSavedAddress() {
+        const savedAddress = $('#address-search').val().trim();
+        if (!savedAddress) {
+            return;
+        }
+
+        forwardGeocode(savedAddress).then((items) => {
+            if (items.length > 0) {
+                setMarker(parseFloat(items[0].lat), parseFloat(items[0].lon), false);
+            } else {
+                $('#map-address').val(savedAddress);
+                $('#map-address-preview').text('Địa chỉ đã lưu: ' + savedAddress);
+            }
+        }).catch(() => {
+            $('#map-address').val(savedAddress);
+            $('#map-address-preview').text('Địa chỉ đã lưu: ' + savedAddress);
+        });
+    }
+
     function renderAddressSuggestions(items) {
         const dropdown = $('#address-suggestions');
         dropdown.empty();
@@ -512,6 +556,7 @@ $(document).ready(function() {
                     $('#address-search').val(item.display_name);
                     dropdown.hide();
                     setMarker(parseFloat(item.lat), parseFloat(item.lon));
+                    persistCustomerAddress(item.display_name);
                 });
 
             dropdown.append(button);
@@ -523,6 +568,10 @@ $(document).ready(function() {
     $('#address-search').on('input', function() {
         const query = $(this).val().trim();
         clearTimeout(searchTimer);
+
+        if (query.length >= 3) {
+            persistCustomerAddress(query);
+        }
 
         if (query.length < 3) {
             $('#address-suggestions').hide().empty();
@@ -542,6 +591,10 @@ $(document).ready(function() {
         if ($(this).val().trim().length >= 3 && $('#address-suggestions').children().length > 0) {
             $('#address-suggestions').show();
         }
+    });
+
+    $('#address-search').on('blur', function() {
+        persistCustomerAddress($(this).val());
     });
 
     $('#btn-open-map').click(function() {
@@ -586,6 +639,7 @@ $(document).ready(function() {
     });
 
     updateTotals();
+    initSavedAddress();
 
     $('input[name="payment_method"]').change(function() {
         if ($(this).val() === 'banking') {

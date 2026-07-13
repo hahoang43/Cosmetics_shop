@@ -6,7 +6,8 @@ $conn = getDatabase();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // 1. Kiểm tra đăng nhập (Chỉ User mới được đánh giá)
     if (!isset($_SESSION['user'])) {
-        echo "<script>alert('Bạn cần đăng nhập để gửi đánh giá!'); window.history.back();</script>";
+        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+        echo "<script>Swal.fire({ icon: 'warning', title: 'Cần đăng nhập', text: 'Bạn cần đăng nhập để gửi đánh giá!' }).then(function() { window.history.back(); });</script>";
         exit;
     }
 
@@ -23,15 +24,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $conn->prepare($sql);
             $stmt->execute([$product_id, $user_id, $rating, $comment]);
 
-            echo "<script>
-                alert('Cảm ơn bạn đã đánh giá sản phẩm!'); 
-                window.location.href = '../frontend/product_detail.php?id=$product_id';
-            </script>";
+            echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+            echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Cảm ơn bạn đã đánh giá sản phẩm!' }).then(function() { window.location.href = '../frontend/product_detail.php?id=$product_id'; });</script>";
         } catch (PDOException $e) {
-            echo "<script>alert('Lỗi Database: " . addslashes($e->getMessage()) . "'); window.history.back();</script>";
+            echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+            echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi Database', text: '" . addslashes($e->getMessage()) . "' }).then(function() { window.history.back(); });</script>";
         }
     } else {
-        echo "<script>alert('Vui lòng nhập đầy đủ nội dung đánh giá!'); window.history.back();</script>";
+        echo "<script src='https://cdn.jsdelivr.net/npm/sweetalert2@11'></script>";
+        echo "<script>Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng nhập đầy đủ nội dung đánh giá!' }).then(function() { window.history.back(); });</script>";
     }
 }
 ?>

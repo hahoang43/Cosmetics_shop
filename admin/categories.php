@@ -11,13 +11,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_category'])) {
         try {
             $stmt = $conn->prepare("INSERT INTO Category (name) VALUES (?)");
             $stmt->execute([$name]);
-            echo "<script>alert('Thêm danh mục thành công!'); window.location.href='categories.php';</script>";
+            echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Thêm danh mục thành công!' }).then(function() { window.location.href='categories.php'; });</script>";
             exit;
         } catch(PDOException $e) {
-            echo "<script>alert('Lỗi: " . addslashes($e->getMessage()) . "');</script>";
+            echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: '" . addslashes($e->getMessage()) . "' });</script>";
         }
     } else {
-        echo "<script>alert('Vui lòng nhập tên danh mục!');</script>";
+        echo "<script>Swal.fire({ icon: 'warning', title: 'Thiếu dữ liệu', text: 'Vui lòng nhập tên danh mục!' });</script>";
     }
 }
 
@@ -32,17 +32,17 @@ if (isset($_GET['delete_id'])) {
     
     if ($count > 0) {
         // Nếu có sản phẩm thì KHÔNG cho xóa để bảo vệ dữ liệu (Ràng buộc toàn vẹn)
-        echo "<script>alert('KHÔNG THỂ XÓA! Danh mục này đang chứa $count sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm đó sang danh mục khác trước.'); window.location.href='categories.php';</script>";
+        echo "<script>Swal.fire({ icon: 'warning', title: 'Không thể xóa', text: 'KHÔNG THỂ XÓA! Danh mục này đang chứa $count sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm đó sang danh mục khác trước.' }).then(function() { window.location.href='categories.php'; });</script>";
         exit;
     } else {
         try {
             // Nếu trống thì cho phép xóa vĩnh viễn
             $stmt_del = $conn->prepare("DELETE FROM Category WHERE id = ?");
             $stmt_del->execute([$del_id]);
-            echo "<script>alert('Đã xóa danh mục!'); window.location.href='categories.php';</script>";
+            echo "<script>Swal.fire({ icon: 'success', title: 'Thành công', text: 'Đã xóa danh mục!' }).then(function() { window.location.href='categories.php'; });</script>";
             exit;
         } catch(PDOException $e) {
-            echo "<script>alert('Lỗi: " . addslashes($e->getMessage()) . "');</script>";
+            echo "<script>Swal.fire({ icon: 'error', title: 'Lỗi', text: '" . addslashes($e->getMessage()) . "' });</script>";
         }
     }
 }
@@ -110,9 +110,9 @@ $categories = $stmt->fetchAll();
 
 <script>
 function confirmDelete(id, name) {
-    if(confirm('Bạn có chắc chắn muốn xóa danh mục "' + name + '" không?')) {
+    confirmAdminAction('Bạn có chắc chắn muốn xóa danh mục "' + name + '" không?', function() {
         window.location.href = 'categories.php?delete_id=' + id;
-    }
+    });
 }
 </script>
 

@@ -127,6 +127,14 @@ try {
     $stmt_order_update = $conn->prepare("UPDATE Orders SET note = ?, total_money = ? WHERE id = ?");
     $stmt_order_update->execute([$orderNote, $totalPrice, $order_id]);
 
+    // Lưu địa chỉ và số điện thoại cho các lần mua tiếp theo
+    $stmt_user_address = $conn->prepare("UPDATE User SET address = ? WHERE id = ?");
+    $stmt_user_address->execute([$address, $user_id]);
+    $stmt_user_phone = $conn->prepare("UPDATE User SET phone_number = ? WHERE id = ?");
+    $stmt_user_phone->execute([$phone, $user_id]);
+    $_SESSION['user']['address'] = $address;
+    $_SESSION['user']['phone_number'] = $phone;
+
     // Nếu mọi thứ trơn tru, Commit lưu vào CSDL
     $conn->commit();
     
